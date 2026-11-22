@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+    <h5 class="fw-bold mb-1">Developer Team Members</h5>
+    <p class="text-muted mb-4" style="font-size: 0.85rem;">Engineers available for assignment and sprint delivery.</p>
+
+    <div class="row g-3">
+      {% for dev in developers %}
+      <div class="col-md-6 col-xl-4">
+        <div class="card h-100 border p-3.5 shadow-sm" style="border-radius: 14px; background-color: var(--bg-primary);">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            {% if dev.photo_url %}
+              <img src="{{ dev.photo_url }}" alt="avatar" class="rounded-circle border" style="width: 44px; height: 44px; object-fit: cover;">
+            {% else %}
+              <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1rem;">
+                {{ dev.full_name[0] }}
+              </div>
+            {% endif %}
+            <div>
+              <h6 class="fw-bold mb-0">{{ dev.full_name }}</h6>
+              <div class="text-muted" style="font-size: 0.75rem;">{{ dev.email }}</div>
+            </div>
+          </div>
+          <p class="text-muted mb-3" style="font-size: 0.8rem;">{{ dev.bio or 'Software Engineer at Developer Productivity Tool.' }}</p>
+          <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto" style="font-size: 0.75rem;">
+            <span class="text-muted">{{ dev.assigned_tasks|length }} Assigned Tasks</span>
+            <span class="badge bg-success bg-opacity-15 text-success">Active</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+

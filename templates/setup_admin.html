@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<div class="auth-split-container">
+  <!-- LEFT HALF (50% Equal Section - Dark Blue Theme) -->
+  <div class="auth-split-left">
+    <div class="auth-glow-circle-1"></div>
+    <div class="auth-glow-circle-2"></div>
+
+    <div class="position-relative z-1">
+      <!-- App Name & Badge -->
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="stat-icon bg-primary text-white shadow-lg" style="width: 44px; height: 44px; border-radius: 12px;">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h4 class="mb-0 fw-bold tracking-tight text-white">System Provisioning</h4>
+          <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25" style="font-size: 0.75rem;">
+            <i class="fa-solid fa-lock me-1"></i> First Administrator Setup
+          </span>
+        </div>
+      </div>
+
+      <!-- Professional Heading & Description -->
+      <div class="mb-4">
+        <h1 class="display-6 fw-extrabold text-white tracking-tight lh-sm">
+          Initialize Root <span class="text-primary text-opacity-75">Administrator.</span>
+        </h1>
+        <p class="text-secondary text-opacity-75 mt-3 mb-0" style="font-size: 0.95rem; line-height: 1.6;">
+          Configure the primary administrator account for this Developer Productivity Tool instance. This account will have full access to platform governance, user management, and system reports.
+        </p>
+      </div>
+
+      <!-- Security Guidance Highlights -->
+      <div class="feature-showcase-grid">
+        <div class="feature-pill-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-user-shield"></i></div>
+          <div>
+            <div class="fw-semibold text-white" style="font-size: 0.82rem;">Super Admin Authority</div>
+            <div class="text-muted" style="font-size: 0.72rem;">Full administrative privilege</div>
+          </div>
+        </div>
+
+        <div class="feature-pill-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-key"></i></div>
+          <div>
+            <div class="fw-semibold text-white" style="font-size: 0.82rem;">Werkzeug Password Hash</div>
+            <div class="text-muted" style="font-size: 0.72rem;">Enterprise-grade security</div>
+          </div>
+        </div>
+
+        <div class="feature-pill-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-database"></i></div>
+          <div>
+            <div class="fw-semibold text-white" style="font-size: 0.82rem;">Direct SQLite Persistence</div>
+            <div class="text-muted" style="font-size: 0.72rem;">Stored in local database</div>
+          </div>
+        </div>
+
+        <div class="feature-pill-card">
+          <div class="feature-icon-wrapper"><i class="fa-solid fa-ban"></i></div>
+          <div>
+            <div class="fw-semibold text-white" style="font-size: 0.82rem;">One-Time Activation</div>
+            <div class="text-muted" style="font-size: 0.72rem;">Locked once provisioned</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Left Footer -->
+    <div class="position-relative z-1 pt-4 border-top border-white border-opacity-10 text-muted" style="font-size: 0.8rem;">
+      <p class="mb-0 text-white text-opacity-75 fw-semibold">
+        Developer Productivity Tool &bull; Security & Access Governance
+      </p>
+    </div>
+  </div>
+
+  <!-- RIGHT HALF (50% Equal Section - Pure White Theme) -->
+  <div class="auth-split-right">
+    <div class="auth-card-inner py-4">
+      <div class="text-start mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="stat-icon bg-danger text-white" style="width: 36px; height: 36px; border-radius: 10px; font-size: 1rem;">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <span class="fw-bold fs-5 text-dark">Developer Productivity Tool</span>
+        </div>
+        <h2 class="fw-bold tracking-tight text-dark mb-1">Create Admin Account</h2>
+        <p class="text-secondary" style="font-size: 0.9rem;">
+          One-time setup to create the initial system administrator.
+        </p>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert" style="border-radius: 12px; font-size: 0.88rem;">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Admin Provisioning Form -->
+      <form id="setup-admin-form" method="POST" action="{{ url_for('auth.setup_admin') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Full Name -->
+        <div class="mb-3">
+          <label for="full_name" class="form-label text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Admin Full Name</label>
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-user prefix-icon"></i>
+            <input type="text" id="full_name" name="full_name" value="{{ full_name or '' }}" class="form-control form-control-custom" placeholder="e.g. Lead Administrator" required autocomplete="name">
+          </div>
+        </div>
+
+        <!-- Email Address -->
+        <div class="mb-3">
+          <label for="email" class="form-label text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Admin Email Address</label>
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-envelope prefix-icon"></i>
+            <input type="email" id="email" name="email" value="{{ email or '' }}" class="form-control form-control-custom" placeholder="admin@devproductivity.com" required autocomplete="email">
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          <label for="password" class="form-label text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Password</label>
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-lock prefix-icon"></i>
+            <input type="password" id="password" name="password" class="form-control form-control-custom" placeholder="At least 8 characters" minlength="8" required autocomplete="new-password">
+            <button type="button" id="toggle-password-btn" class="toggle-password-btn" aria-label="Toggle password visibility">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mb-4">
+          <label for="confirm_password" class="form-label text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Confirm Password</label>
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-shield-check prefix-icon"></i>
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control form-control-custom" placeholder="Re-type password" minlength="8" required autocomplete="new-password">
+            <button type="button" id="toggle-confirm-password-btn" class="toggle-password-btn" aria-label="Toggle password visibility">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit-btn" class="btn btn-danger w-100 py-2.5 fw-semibold shadow-sm" style="border-radius: 12px;">
+          <i class="fa-solid fa-shield-check me-2"></i>Provision Administrator Account
+        </button>
+      </form>
+
+      <div class="text-center pt-4">
+        <p class="text-secondary mb-0" style="font-size: 0.88rem;">
+          Already have an account? 
+          <a href="{{ url_for('auth.login') }}" class="fw-semibold text-primary text-decoration-none">Sign In</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Bottom Footer -->
+    <div class="text-center text-muted pt-3 border-top" style="font-size: 0.75rem;">
+      Secured with Werkzeug Hashing &bull; Role Protected: Administrator
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Simple password toggle helper for setup admin page
+  function setupToggle(btnId, inputId) {
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    if (btn && input) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        btn.innerHTML = isPassword ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+      });
+    }
+  }
+  setupToggle('toggle-password-btn', 'password');
+  setupToggle('toggle-confirm-password-btn', 'confirm_password');
+</script>
+{% endblock %}

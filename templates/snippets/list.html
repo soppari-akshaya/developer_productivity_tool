@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h5 class="fw-bold mb-1">Code Snippet Manager</h5>
+      <p class="text-muted mb-0" style="font-size: 0.85rem;">Organize, categorize, and copy syntax-highlighted code snippets.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <form method="GET" action="{{ url_for('snippets.list_snippets') }}" class="d-flex gap-2">
+        <input type="text" name="q" value="{{ search_q }}" class="form-control form-control-sm" placeholder="Search title or tag..." style="max-width: 170px;">
+        <select name="lang" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width: 130px;">
+          <option value="all" {% if lang_filter == 'all' %}selected{% endif %}>All Languages</option>
+          {% for l in languages %}
+            <option value="{{ l }}" {% if lang_filter == l %}selected{% endif %}>{{ l|upper }}</option>
+          {% endfor %}
+        </select>
+      </form>
+
+      <a href="{{ url_for('snippets.create') }}" class="btn btn-sm btn-primary">
+        <i class="fa-solid fa-plus me-1"></i> New Snippet
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    {% for s in snippets %}
+    <div class="col-md-6">
+      <div class="card h-100 border p-3.5 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h6 class="fw-bold mb-0 text-truncate" style="max-width: 250px;">{{ s.title }}</h6>
+            <small class="text-muted" style="font-size: 0.72rem;">{{ s.description or 'No description' }}</small>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-secondary bg-opacity-25 text-primary text-uppercase font-monospace" style="font-size: 0.7rem;">{{ s.language }}</span>
+            <form method="POST" action="{{ url_for('snippets.toggle_favorite', snippet_id=s.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm p-0 border-0 text-{{ 'warning' if s.is_favorite else 'muted' }}">
+                <i class="fa-{{ 'solid' if s.is_favorite else 'regular' }} fa-star"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Code Block -->
+        <div class="position-relative my-2 rounded-3 overflow-hidden border">
+          <pre id="snippet-code-{{ s.id }}" class="p-3 m-0 font-monospace text-light" style="background-color: #0f172a; font-size: 0.8rem; max-height: 180px; overflow-y: auto;">{{ s.code }}</pre>
+          <button type="button" class="btn btn-sm btn-dark position-absolute top-0 end-0 m-2 copy-snippet-btn py-0 px-2" data-target="snippet-code-{{ s.id }}" style="font-size: 0.75rem; background: rgba(0,0,0,0.6);">
+            <i class="fa-regular fa-copy me-1"></i> Copy
+          </button>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-2 mt-auto text-muted" style="font-size: 0.75rem;">
+          <div>
+            {% if s.tags %}
+              {% for tag in s.tags.split(',') %}
+                <span class="badge bg-secondary bg-opacity-10 text-muted me-1 font-monospace">{{ tag.strip() }}</span>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('snippets.edit', snippet_id=s.id) }}" class="text-decoration-none text-primary">Edit</a>
+            <form method="POST" action="{{ url_for('snippets.delete', snippet_id=s.id) }}" onsubmit="return confirm('Delete this snippet?');" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm p-0 border-0 text-danger" style="font-size: 0.75rem;">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5 text-muted">No snippets saved in vault yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

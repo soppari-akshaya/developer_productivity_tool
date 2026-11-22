@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="card border p-4 shadow-sm mx-auto" style="max-width: 600px; border-radius: 16px; background-color: var(--bg-card);">
+    <h5 class="fw-bold mb-1">Create New Project</h5>
+    <p class="text-muted mb-4" style="font-size: 0.85rem;">Initialize a software development workspace.</p>
+
+    <form method="POST" action="{{ url_for('projects.create') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Project Name <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-control form-control-custom" placeholder="e.g. Mobile Application v2" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Description</label>
+        <textarea name="description" class="form-control form-control-custom" rows="3" placeholder="Goals, deliverables, and repo links..."></textarea>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Start Date</label>
+          <input type="date" name="start_date" class="form-control form-control-custom">
+        </div>
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Target Deadline</label>
+          <input type="date" name="end_date" class="form-control form-control-custom">
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Priority</label>
+          <select name="priority" class="form-select form-control-custom">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Status</label>
+          <select name="status" class="form-select form-control-custom">
+            <option value="planning">Planning</option>
+            <option value="active" selected>Active</option>
+            <option value="on_hold">On Hold</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary btn-sm px-3">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-sm px-4">Create Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

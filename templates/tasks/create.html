@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="card border p-4 shadow-sm mx-auto" style="max-width: 600px; border-radius: 16px; background-color: var(--bg-card);">
+    <h5 class="fw-bold mb-1">Create Sprint Task</h5>
+    <p class="text-muted mb-4" style="font-size: 0.85rem;">Define a work item, assign ownership, and establish a deadline.</p>
+
+    <form method="POST" action="{{ url_for('tasks.create') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Task Title <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control form-control-custom" placeholder="e.g. Implement OAuth token verification endpoint" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Associated Project <span class="text-danger">*</span></label>
+        <select name="project_id" class="form-select form-control-custom" required>
+          {% for p in projects %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Assign Developer</label>
+        <select name="assigned_to_id" class="form-select form-control-custom">
+          <option value="">-- Assign to Me ({{ current_user.full_name }}) --</option>
+          {% for dev in developers %}
+            <option value="{{ dev.id }}">{{ dev.full_name }} ({{ dev.role_title }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Description & Acceptance Criteria</label>
+        <textarea name="description" class="form-control form-control-custom" rows="3" placeholder="Scope, requirements, or reproduction steps..."></textarea>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Priority</label>
+          <select name="priority" class="form-select form-control-custom">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Target Deadline</label>
+          <input type="date" name="deadline" class="form-control form-control-custom">
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary btn-sm px-3">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-sm px-4">Create Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

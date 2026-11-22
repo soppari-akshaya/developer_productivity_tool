@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h5 class="fw-bold mb-1">Productivity Analytics & Reports</h5>
+      <p class="text-muted mb-0" style="font-size: 0.85rem;">Live charts on task velocity, working hours, and sprint deliverables.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('reports.export_csv') }}" class="btn btn-sm btn-outline-success">
+        <i class="fa-solid fa-file-csv me-1"></i> Export Tasks CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Completed Tasks</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ completed_tasks }}/{{ total_tasks }}</h3>
+          <span class="text-success fw-medium" style="font-size: 0.75rem;">Resolved in sprints</span>
+        </div>
+        <div class="stat-icon bg-success bg-opacity-15 text-success"><i class="fa-solid fa-circle-check"></i></div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">In Progress Tasks</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ in_progress_tasks }}</h3>
+          <span class="text-primary fw-medium" style="font-size: 0.75rem;">Under active development</span>
+        </div>
+        <div class="stat-icon bg-primary bg-opacity-15 text-primary"><i class="fa-solid fa-spinner"></i></div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Logged Hours</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ total_hours }} hrs</h3>
+          <span class="text-info fw-medium" style="font-size: 0.75rem;">Time Tracker Records</span>
+        </div>
+        <div class="stat-icon bg-info bg-opacity-15 text-info"><i class="fa-solid fa-clock"></i></div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pomodoro Sessions</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ total_pomodoro_sessions }}</h3>
+          <span class="text-danger fw-medium" style="font-size: 0.75rem;">Focus blocks completed</span>
+        </div>
+        <div class="stat-icon bg-danger bg-opacity-15 text-danger"><i class="fa-solid fa-fire"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Charts Grid -->
+  <div class="row g-4">
+    <!-- Task Status Doughnut -->
+    <div class="col-lg-5">
+      <div class="card border p-4 shadow-sm h-100" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Task Status Breakdown</h6>
+        <div style="height: 280px; position: relative;">
+          <canvas id="taskStatusChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Hours Bar Chart -->
+    <div class="col-lg-7">
+      <div class="card border p-4 shadow-sm h-100" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-column text-success me-2"></i>Weekly Working Hours (Last 7 Days)</h6>
+        <div style="height: 280px; position: relative;">
+          <canvas id="weeklyHoursChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}
+

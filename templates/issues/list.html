@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h5 class="fw-bold mb-1">Bug & Issue Tracker</h5>
+      <p class="text-muted mb-0" style="font-size: 0.85rem;">Log, assign, prioritize, and track software defects and regressions.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <form method="GET" action="{{ url_for('issues.list_issues') }}" class="d-flex gap-2">
+        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width: 130px;">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+          <option value="open" {% if status_filter == 'open' %}selected{% endif %}>Open</option>
+          <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+          <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
+          <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>Closed</option>
+        </select>
+        <select name="severity" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width: 130px;">
+          <option value="all" {% if severity_filter == 'all' %}selected{% endif %}>All Severities</option>
+          <option value="critical" {% if severity_filter == 'critical' %}selected{% endif %}>Critical</option>
+          <option value="major" {% if severity_filter == 'major' %}selected{% endif %}>Major</option>
+          <option value="minor" {% if severity_filter == 'minor' %}selected{% endif %}>Minor</option>
+        </select>
+      </form>
+
+      <a href="{{ url_for('issues.create') }}" class="btn btn-sm btn-danger">
+        <i class="fa-solid fa-bug me-1"></i> Report Bug
+      </a>
+    </div>
+  </div>
+
+  <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+        <thead class="text-muted text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+          <tr>
+            <th>ID</th>
+            <th>Issue Title</th>
+            <th>Project</th>
+            <th>Reported By</th>
+            <th>Severity</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for issue in issues %}
+          <tr>
+            <td class="font-monospace text-muted">#{{ issue.id }}</td>
+            <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ issue.title }}</td>
+            <td class="text-muted">{{ issue.project.name if issue.project else 'N/A' }}</td>
+            <td class="text-muted">{{ issue.reporter.full_name }}</td>
+            <td>
+              <span class="badge bg-{{ 'danger' if issue.severity == 'critical' else ('warning' if issue.severity == 'major' else 'secondary') }} bg-opacity-15 text-{{ 'danger' if issue.severity == 'critical' else ('warning' if issue.severity == 'major' else 'secondary') }}">
+                {{ issue.severity|upper }}
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-secondary bg-opacity-15 text-primary">{{ issue.priority|title }}</span>
+            </td>
+            <td>
+              <span class="badge bg-{{ 'success' if issue.status == 'resolved' else ('secondary' if issue.status == 'closed' else 'danger') }} bg-opacity-15 text-{{ 'success' if issue.status == 'resolved' else ('secondary' if issue.status == 'closed' else 'danger') }}">
+                {{ issue.status|replace('_', ' ')|title }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('issues.update_status', issue_id=issue.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="status" class="form-select form-select-sm" style="font-size: 0.75rem; max-width: 110px;" onchange="this.form.submit()">
+                  <option value="open" {% if issue.status == 'open' %}selected{% endif %}>Open</option>
+                  <option value="in_progress" {% if issue.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                  <option value="resolved" {% if issue.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                  <option value="closed" {% if issue.status == 'closed' %}selected{% endif %}>Closed</option>
+                </select>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center py-4 text-muted">No bugs or issues logged.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

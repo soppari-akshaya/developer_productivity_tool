@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="card border p-4 shadow-sm mx-auto" style="max-width: 600px; border-radius: 16px; background-color: var(--bg-card);">
+    <h5 class="fw-bold mb-1"><i class="fa-solid fa-bug text-danger me-2"></i>Report a Bug or Issue</h5>
+    <p class="text-muted mb-4" style="font-size: 0.85rem;">Log defects, unexpected errors, or performance regressions.</p>
+
+    <form method="POST" action="{{ url_for('issues.create') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Issue Title <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control form-control-custom" placeholder="e.g. CSRF cookie mismatch on Safari mobile" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Affected Project <span class="text-danger">*</span></label>
+        <select name="project_id" class="form-select form-control-custom" required>
+          {% for p in projects %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Assign Engineer</label>
+        <select name="assigned_to_id" class="form-select form-control-custom">
+          <option value="">-- Unassigned --</option>
+          {% for dev in developers %}
+            <option value="{{ dev.id }}">{{ dev.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Severity</label>
+          <select name="severity" class="form-select form-control-custom">
+            <option value="minor">Minor</option>
+            <option value="major" selected>Major</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Priority</label>
+          <select name="priority" class="form-select form-control-custom">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Reproduction Steps / Details</label>
+        <textarea name="description" class="form-control form-control-custom" rows="4" placeholder="Steps to reproduce, error stack trace, expected vs actual behavior..."></textarea>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline-secondary btn-sm px-3">Cancel</a>
+        <button type="submit" class="btn btn-danger btn-sm px-4">Submit Bug Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

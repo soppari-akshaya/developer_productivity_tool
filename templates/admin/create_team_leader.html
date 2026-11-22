@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-2">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-bold tracking-tight mb-1">Provision Team Leader</h3>
+      <p class="text-secondary mb-0" style="font-size: 0.9rem;">
+        Create a verified engineering leadership account with sprint management and review permissions.
+      </p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" style="border-radius: 10px;">
+      <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card); color: var(--text-primary);">
+        <div class="d-flex align-items-center gap-3 pb-3 mb-4 border-bottom">
+          <div class="stat-icon bg-warning bg-opacity-15 text-warning" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.2rem;">
+            <i class="fa-solid fa-user-tie"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">Leadership Account Details</h5>
+            <small class="text-muted">Fill out the credentials and organizational placement for the new Team Leader.</small>
+          </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.create_team_leader') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Full Name -->
+          <div class="mb-3">
+            <label for="full_name" class="form-label text-uppercase fw-semibold small" style="letter-spacing: 0.5px;">Full Name <span class="text-danger">*</span></label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-user prefix-icon"></i>
+              <input type="text" id="full_name" name="full_name" class="form-control form-control-custom" placeholder="e.g. Sarah Jenkins" required>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label for="email" class="form-label text-uppercase fw-semibold small" style="letter-spacing: 0.5px;">Email Address <span class="text-danger">*</span></label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-envelope prefix-icon"></i>
+              <input type="email" id="email" name="email" class="form-control form-control-custom" placeholder="leader@company.com" required>
+            </div>
+            <div class="form-text small" style="font-size: 0.72rem;">Must be unique across all system users.</div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label for="password" class="form-label text-uppercase fw-semibold small" style="letter-spacing: 0.5px;">Initial Password <span class="text-danger">*</span></label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-lock prefix-icon"></i>
+              <input type="password" id="password" name="password" class="form-control form-control-custom" placeholder="At least 8 characters" minlength="8" required>
+            </div>
+            <div class="form-text small" style="font-size: 0.72rem;">Secured with Werkzeug cryptographic hashing.</div>
+          </div>
+
+          <!-- Department -->
+          <div class="mb-4">
+            <label for="department" class="form-label text-uppercase fw-semibold small" style="letter-spacing: 0.5px;">Department / Team</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-building prefix-icon"></i>
+              <input type="text" id="department" name="department" class="form-control form-control-custom" placeholder="e.g. Core Architecture & Backend" value="Engineering">
+            </div>
+          </div>
+
+          <!-- Role Info Card -->
+          <div class="p-3 mb-4 rounded-3 bg-secondary bg-opacity-10 border d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <span class="badge badge-role-team-leader fs-6">Team Leader</span>
+              <div>
+                <div class="fw-semibold small">Sprint Supervisor & Code Reviewer</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Granted access to team member velocity, sprint task management, and work reviews.</div>
+              </div>
+            </div>
+            <i class="fa-solid fa-shield-halved text-success fs-5"></i>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+              <i class="fa-solid fa-user-plus me-1"></i> Create Team Leader
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

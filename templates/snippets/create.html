@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="card border p-4 shadow-sm mx-auto" style="max-width: 650px; border-radius: 16px; background-color: var(--bg-card);">
+    <h5 class="fw-bold mb-1">Save New Code Snippet</h5>
+    <p class="text-muted mb-4" style="font-size: 0.85rem;">Store reusable code recipes, hooks, and SQL statements.</p>
+
+    <form method="POST" action="{{ url_for('snippets.create') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Snippet Title <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control form-control-custom" placeholder="e.g. Firebase Auth ID Token Verifier" required>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Programming Language</label>
+          <select name="language" class="form-select form-control-custom text-uppercase">
+            {% for l in languages %}
+              <option value="{{ l }}" {% if l == initial_lang %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Tags (comma-separated)</label>
+          <input type="text" name="tags" class="form-control form-control-custom" placeholder="python, auth, tokens">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Code Content <span class="text-danger">*</span></label>
+        <textarea name="code" class="form-control form-control-custom font-monospace" rows="8" placeholder="Paste snippet code here..." required>{{ initial_code or '' }}</textarea>
+      </div>
+
+      <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" name="is_favorite" id="is_favorite">
+        <label class="form-check-label text-muted" for="is_favorite" style="font-size: 0.85rem;">
+          <i class="fa-solid fa-star text-warning me-1"></i> Mark as favorite
+        </label>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <a href="{{ url_for('snippets.list_snippets') }}" class="btn btn-outline-secondary btn-sm px-3">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-sm px-4">Save Snippet</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

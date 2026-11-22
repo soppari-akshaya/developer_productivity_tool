@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="card border p-4 shadow-sm mx-auto" style="max-width: 600px; border-radius: 16px; background-color: var(--bg-card);">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      {% if current_user.photo_url %}
+        <img src="{{ current_user.photo_url }}" alt="avatar" class="rounded-circle border" style="width: 64px; height: 64px; object-fit: cover;">
+      {% else %}
+        <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center" style="width: 64px; height: 64px; font-size: 1.5rem;">
+          {{ current_user.full_name[0] }}
+        </div>
+      {% endif %}
+      <div>
+        <h5 class="fw-bold mb-0">{{ current_user.full_name }}</h5>
+        <div class="text-muted" style="font-size: 0.85rem;">{{ current_user.email }}</div>
+        <span class="badge badge-role-{{ current_user.role|replace('_', '-') }} mt-1">{{ current_user.role_title }}</span>
+      </div>
+    </div>
+
+    <div class="list-group list-group-flush mb-4" style="font-size: 0.88rem;">
+      <div class="list-group-item px-0 py-2.5 border-0 border-bottom d-flex justify-content-between" style="background: transparent;">
+        <span class="text-muted">Department</span>
+        <span class="fw-semibold">{{ current_user.department or 'Engineering' }}</span>
+      </div>
+      <div class="list-group-item px-0 py-2.5 border-0 border-bottom d-flex justify-content-between" style="background: transparent;">
+        <span class="text-muted">Account Created</span>
+        <span class="fw-semibold">{{ current_user.created_at.strftime('%d %B %Y') }}</span>
+      </div>
+      <div class="list-group-item px-0 py-2.5 border-0 border-bottom d-flex justify-content-between" style="background: transparent;">
+        <span class="text-muted">Account Status</span>
+        <span class="badge bg-success bg-opacity-15 text-success">Active</span>
+      </div>
+      <div class="list-group-item px-0 py-2.5 border-0 border-bottom d-flex justify-content-between" style="background: transparent;">
+        <span class="text-muted">Bio</span>
+        <span class="fw-semibold text-truncate" style="max-width: 300px;">{{ current_user.bio or 'Software Engineer at Developer Productivity Tool.' }}</span>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <form method="POST" action="{{ url_for('auth.logout') }}" class="d-inline m-0 p-0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-danger btn-sm">
+          <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Sign Out
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

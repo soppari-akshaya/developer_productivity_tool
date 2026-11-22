@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h5 class="fw-bold mb-1">Team Deliverables & Sprint Reports</h5>
+      <p class="text-muted mb-0" style="font-size: 0.85rem;">Project velocities, task completion rates, and sprint burndown.</p>
+    </div>
+    <a href="{{ url_for('reports.export_csv') }}" class="btn btn-sm btn-outline-success">
+      <i class="fa-solid fa-file-csv me-1"></i> Export Tasks CSV
+    </a>
+  </div>
+
+  <div class="row g-3">
+    {% for p in projects %}
+    <div class="col-md-6">
+      <div class="card h-100 border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold mb-0 text-truncate">{{ p.name }}</h6>
+          <span class="badge bg-primary bg-opacity-15 text-primary">{{ p.status|upper }}</span>
+        </div>
+        <p class="text-muted text-truncate mb-3" style="font-size: 0.82rem;">{{ p.description or 'No project description.' }}</p>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 0.75rem;">
+            <span>Completion Rate</span>
+            <span class="fw-bold">{{ p.progress }}%</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: {{ p.progress }}%;"></div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between text-muted pt-2 border-top" style="font-size: 0.78rem;">
+          <span>{{ p.tasks|length }} Total Tasks</span>
+          <span>{{ p.members|length }} Engineers</span>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5 text-muted">No managed projects available for reporting.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

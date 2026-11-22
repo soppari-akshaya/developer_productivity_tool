@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Team Metrics Stat Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Team Engineers</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ total_team_members }}</h3>
+          <span class="text-success fw-medium" style="font-size: 0.75rem;">Active Developers</span>
+        </div>
+        <div class="stat-icon bg-indigo bg-opacity-15 text-indigo"><i class="fa-solid fa-users"></i></div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Active Projects</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ active_projects_count }}</h3>
+          <span class="text-primary fw-medium" style="font-size: 0.75rem;">Under Leadership</span>
+        </div>
+        <div class="stat-icon bg-primary bg-opacity-15 text-primary"><i class="fa-solid fa-diagram-project"></i></div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Sprint Tasks</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ completed_tasks }}/{{ total_tasks }}</h3>
+          <span class="text-{{ 'danger' if overdue_tasks > 0 else 'success' }} fw-medium" style="font-size: 0.75rem;">
+            {{ overdue_tasks }} Overdue
+          </span>
+        </div>
+        <div class="stat-icon bg-warning bg-opacity-15 text-warning"><i class="fa-solid fa-list-check"></i></div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div>
+          <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Team Productivity</span>
+          <h3 class="fw-bold mb-0 mt-1">{{ team_productivity }}%</h3>
+          <span class="text-success fw-medium" style="font-size: 0.75rem;">Sprint Completion</span>
+        </div>
+        <div class="stat-icon bg-success bg-opacity-15 text-success"><i class="fa-solid fa-chart-line"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Active Projects Managed -->
+    <div class="col-lg-7">
+      <div class="card border p-4 shadow-sm h-100" style="border-radius: 16px; background-color: var(--bg-card);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-folder-open text-primary me-2"></i>Managed Software Projects</h6>
+          <a href="{{ url_for('projects.create') }}" class="btn btn-sm btn-primary" style="border-radius: 8px;">
+            <i class="fa-solid fa-plus me-1"></i> New Project
+          </a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+            <thead>
+              <tr class="text-muted text-uppercase" style="font-size: 0.7rem;">
+                <th>Project Name</th>
+                <th>Priority</th>
+                <th>Progress</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in managed_projects %}
+              <tr>
+                <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ p.name }}</td>
+                <td>
+                  <span class="badge bg-{{ 'danger' if p.priority == 'critical' else ('warning' if p.priority == 'high' else 'primary') }} bg-opacity-15 text-{{ 'danger' if p.priority == 'critical' else ('warning' if p.priority == 'high' else 'primary') }}">
+                    {{ p.priority|title }}
+                  </span>
+                </td>
+                <td style="width: 140px;">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-fill" style="height: 6px;">
+                      <div class="progress-bar bg-primary" role="progressbar" style="width: {{ p.progress }}%;"></div>
+                    </div>
+                    <span class="text-muted font-monospace" style="font-size: 0.75rem;">{{ p.progress }}%</span>
+                  </div>
+                </td>
+                <td>
+                  <a href="{{ url_for('projects.detail', project_id=p.id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">View</a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">No managed projects yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Members List -->
+    <div class="col-lg-5">
+      <div class="card border p-4 shadow-sm h-100" style="border-radius: 16px; background-color: var(--bg-card);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-users text-indigo me-2"></i>Developer Roster</h6>
+          <a href="{{ url_for('team_leader.members') }}" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px;">All</a>
+        </div>
+
+        <div class="list-group list-group-flush">
+          {% for m in team_members[:5] %}
+          <div class="list-group-item px-0 py-2 border-0 border-bottom d-flex align-items-center justify-content-between" style="background: transparent;">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-primary bg-opacity-15 text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                {{ m.full_name[0] }}
+              </div>
+              <div>
+                <div class="fw-semibold" style="font-size: 0.82rem;">{{ m.full_name }}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">{{ m.email }}</div>
+              </div>
+            </div>
+            <span class="badge bg-success bg-opacity-15 text-success" style="font-size: 0.7rem;">Active</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Daily Work Logs Submitted by Developers -->
+  <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold mb-0"><i class="fa-solid fa-book text-info me-2"></i>Recent Developer Standup Logs</h6>
+      <a href="{{ url_for('team_leader.reviews') }}" class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">Review All</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+        <thead>
+          <tr class="text-muted text-uppercase" style="font-size: 0.7rem;">
+            <th>Developer</th>
+            <th>Date</th>
+            <th>Work Performed</th>
+            <th>Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in recent_work_logs %}
+          <tr>
+            <td class="fw-semibold">{{ log.user.full_name }}</td>
+            <td class="text-muted">{{ log.date.strftime('%d %b %Y') }}</td>
+            <td class="text-truncate" style="max-width: 400px;">{{ log.work_performed }}</td>
+            <td><span class="badge bg-secondary bg-opacity-15 text-primary">{{ log.hours_worked }} hrs</span></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="text-center py-4 text-muted">No developer logs submitted yet today.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

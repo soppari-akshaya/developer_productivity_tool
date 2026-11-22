@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="row g-4">
+    <!-- Log Submission Form -->
+    <div class="col-lg-5">
+      <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h5 class="fw-bold mb-1"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Daily Work Log</h5>
+        <p class="text-muted mb-3" style="font-size: 0.85rem;">Submit your daily standup accomplishments and blockers.</p>
+
+        <form method="POST" action="{{ url_for('developer.work_logs') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Work Performed Today <span class="text-danger">*</span></label>
+            <textarea name="work_performed" class="form-control form-control-custom" rows="3" placeholder="Summary of features, fixes, or commits..." required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Completed Tasks</label>
+            <textarea name="completed_tasks" class="form-control form-control-custom" rows="2" placeholder="Tasks closed or PRs merged..."></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Challenges / Blockers</label>
+            <input type="text" name="challenges" class="form-control form-control-custom" placeholder="Any impediments or questions?">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Hours Worked</label>
+            <input type="number" step="0.5" name="hours_worked" class="form-control form-control-custom" value="8.0" min="0.5" max="24" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" style="border-radius: 12px;">
+            <i class="fa-solid fa-paper-plane me-1"></i> Submit Daily Log
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Submitted Logs History -->
+    <div class="col-lg-7">
+      <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left text-info me-2"></i>My Submission History</h6>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+            <thead>
+              <tr class="text-muted text-uppercase" style="font-size: 0.7rem;">
+                <th>Date</th>
+                <th>Work Performed</th>
+                <th>Hours</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in logs %}
+              <tr>
+                <td class="text-muted font-monospace">{{ log.date.strftime('%Y-%m-%d') }}</td>
+                <td class="text-truncate" style="max-width: 350px;">{{ log.work_performed }}</td>
+                <td><span class="badge bg-primary bg-opacity-15 text-primary">{{ log.hours_worked }} hrs</span></td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" class="text-center py-4 text-muted">No logs submitted yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

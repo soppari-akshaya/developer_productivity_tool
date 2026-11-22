@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <a href="{{ url_for('developer.github_view') }}" class="text-decoration-none text-muted" style="font-size: 0.85rem;">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Repositories
+      </a>
+      <h4 class="fw-bold mb-0 mt-1">
+        <i class="fa-brands fa-github text-primary me-2"></i>{{ owner }} / {{ repo_name }}
+      </h4>
+    </div>
+
+    {% if repo and repo.html_url %}
+    <a href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+      <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open on GitHub
+    </a>
+    {% endif %}
+  </div>
+
+  {% if repo %}
+  <!-- Repo Meta Card -->
+  <div class="card border p-4 shadow-sm mb-4" style="border-radius: 16px; background-color: var(--bg-card);">
+    <p class="text-secondary mb-3" style="font-size: 0.92rem;">{{ repo.description or 'No repository description.' }}</p>
+    <div class="d-flex flex-wrap gap-4 text-muted" style="font-size: 0.8rem;">
+      <span><strong>Primary Language:</strong> {{ repo.language or 'N/A' }}</span>
+      <span><strong>Stars:</strong> {{ repo.stargazers_count }}</span>
+      <span><strong>Forks:</strong> {{ repo.forks_count }}</span>
+      <span><strong>Open Issues:</strong> {{ repo.open_issues_count }}</span>
+      <span><strong>Default Branch:</strong> <code>{{ repo.default_branch }}</code></span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row g-4">
+    <!-- Commits Stream -->
+    <div class="col-lg-6">
+      <div class="card border p-4 shadow-sm h-100" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-code-commit text-primary me-2"></i>Recent Commits</h6>
+        <div class="list-group list-group-flush">
+          {% for c in commits %}
+          <div class="list-group-item px-0 py-2.5 border-0 border-bottom" style="background: transparent;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-semibold text-truncate" style="font-size: 0.85rem; max-width: 320px;">
+                {{ c.commit.message.split('\n')[0] }}
+              </span>
+              <span class="badge bg-secondary bg-opacity-25 text-muted font-monospace" style="font-size: 0.68rem;">
+                {{ c.sha[:7] }}
+              </span>
+            </div>
+            <div class="text-muted" style="font-size: 0.72rem;">
+              {{ c.commit.author.name }} • {{ c.commit.author.date[:10] }}
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted" style="font-size: 0.85rem;">No recent commits recorded.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pull Requests Stream -->
+    <div class="col-lg-6">
+      <div class="card border p-4 shadow-sm h-100" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-code-pull-request text-success me-2"></i>Pull Requests</h6>
+        <div class="list-group list-group-flush">
+          {% for pr in pull_requests %}
+          <div class="list-group-item px-0 py-2.5 border-0 border-bottom" style="background: transparent;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-semibold text-truncate" style="font-size: 0.85rem; max-width: 320px;">
+                #{{ pr.number }} {{ pr.title }}
+              </span>
+              <span class="badge bg-{{ 'success' if pr.state == 'open' else 'secondary' }} bg-opacity-15 text-{{ 'success' if pr.state == 'open' else 'secondary' }}" style="font-size: 0.68rem;">
+                {{ pr.state|upper }}
+              </span>
+            </div>
+            <div class="text-muted" style="font-size: 0.72rem;">
+              by {{ pr.user.login }} • Updated {{ pr.updated_at[:10] }}
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted" style="font-size: 0.85rem;">No pull requests found.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="row g-4">
+    <!-- Task Details Column -->
+    <div class="col-lg-8">
+      <div class="card border p-4 shadow-sm mb-4" style="border-radius: 16px; background-color: var(--bg-card);">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <span class="badge bg-primary bg-opacity-15 text-primary mb-2 font-monospace">{{ task.project.name if task.project else 'General Task' }}</span>
+            <h4 class="fw-bold mb-1">{{ task.title }}</h4>
+          </div>
+          <div class="d-flex gap-2">
+            <span class="badge bg-{{ 'danger' if task.priority == 'critical' else ('warning' if task.priority == 'high' else 'secondary') }} bg-opacity-15 text-{{ 'danger' if task.priority == 'critical' else ('warning' if task.priority == 'high' else 'secondary') }}">
+              {{ task.priority|upper }}
+            </span>
+            <span class="badge bg-{{ 'success' if task.status == 'completed' else 'info' }} bg-opacity-15 text-{{ 'success' if task.status == 'completed' else 'info' }}">
+              {{ task.status|replace('_', ' ')|upper }}
+            </span>
+          </div>
+        </div>
+
+        <p class="text-secondary mt-3 mb-4" style="line-height: 1.6; font-size: 0.95rem;">
+          {{ task.description or 'No detailed description provided for this work item.' }}
+        </p>
+
+        <!-- Quick Status Update Form -->
+        <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}" class="d-flex align-items-center gap-2 pt-3 border-top">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <span class="text-muted fw-semibold" style="font-size: 0.8rem;">Change Status:</span>
+          <select name="status" class="form-select form-select-sm" style="max-width: 150px;" onchange="this.form.submit()">
+            <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
+            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="in_review" {% if task.status == 'in_review' %}selected{% endif %}>In Review</option>
+            <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+          </select>
+        </form>
+      </div>
+
+      <!-- Task Comments & Discussion -->
+      <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-comments text-primary me-2"></i>Task Discussion ({{ comments|length }})</h6>
+
+        <!-- Comments Stream -->
+        <div class="list-group list-group-flush mb-4">
+          {% for c in comments %}
+          <div class="list-group-item px-0 py-3 border-0 border-bottom" style="background: transparent;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold" style="font-size: 0.85rem;">{{ c.user.full_name }}</span>
+              <span class="text-muted font-monospace" style="font-size: 0.72rem;">{{ c.created_at.strftime('%d %b %Y %H:%M') }}</span>
+            </div>
+            <p class="text-secondary mb-0" style="font-size: 0.88rem;">{{ c.comment }}</p>
+          </div>
+          {% else %}
+          <div class="text-center py-3 text-muted" style="font-size: 0.85rem;">No comments yet. Start the conversation below.</div>
+          {% endfor %}
+        </div>
+
+        <!-- Add Comment Form -->
+        <form method="POST" action="{{ url_for('tasks.add_comment', task_id=task.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2">
+            <textarea name="comment" class="form-control form-control-custom" rows="2" placeholder="Write a note or status update..." required></textarea>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-sm px-3">Post Note</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Task Meta Sidebar Column -->
+    <div class="col-lg-4">
+      <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3">Task Information</h6>
+        <div class="mb-3">
+          <label class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Assigned Developer</label>
+          <div class="d-flex align-items-center gap-2 mt-1">
+            <div class="rounded-circle bg-primary bg-opacity-15 text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.75rem;">
+              {{ task.assignee.full_name[0] if task.assignee else '?' }}
+            </div>
+            <span class="fw-semibold" style="font-size: 0.85rem;">{{ task.assignee.full_name if task.assignee else 'Unassigned' }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Target Deadline</label>
+          <div class="fw-semibold mt-1" style="font-size: 0.85rem;">
+            {{ task.deadline.strftime('%d %B %Y') if task.deadline else 'No deadline set' }}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Created By</label>
+          <div class="text-muted mt-1" style="font-size: 0.82rem;">{{ task.author.full_name }}</div>
+        </div>
+
+        <div class="pt-3 border-top">
+          <form method="POST" action="{{ url_for('tasks.delete', task_id=task.id) }}" onsubmit="return confirm('Delete this task?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+              <i class="fa-solid fa-trash me-1"></i> Delete Task
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

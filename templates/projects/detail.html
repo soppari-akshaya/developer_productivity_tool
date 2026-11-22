@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Project Banner Header -->
+  <div class="card border p-4 shadow-sm mb-4" style="border-radius: 16px; background-color: var(--bg-card);">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h4 class="fw-bold mb-0">{{ project.name }}</h4>
+          <span class="badge bg-{{ 'danger' if project.priority == 'critical' else ('warning' if project.priority == 'high' else 'primary') }} bg-opacity-15 text-{{ 'danger' if project.priority == 'critical' else ('warning' if project.priority == 'high' else 'primary') }}">
+            {{ project.priority|upper }}
+          </span>
+          <span class="badge bg-success bg-opacity-15 text-success">{{ project.status|upper }}</span>
+        </div>
+        <p class="text-muted mb-0" style="font-size: 0.88rem;">{{ project.description }}</p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        {% if current_user.role in ['admin', 'team_leader'] or project.created_by_id == current_user.id %}
+          <a href="{{ url_for('projects.edit', project_id=project.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-pen-to-square me-1"></i> Edit Project
+          </a>
+          <form method="POST" action="{{ url_for('projects.delete', project_id=project.id) }}" onsubmit="return confirm('Are you sure you want to delete this project?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="fa-solid fa-trash me-1"></i> Delete
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row g-3 pt-3 border-top mt-3 text-muted" style="font-size: 0.8rem;">
+      <div class="col-sm-3"><strong>Start Date:</strong> {{ project.start_date.strftime('%d %b %Y') if project.start_date else 'N/A' }}</div>
+      <div class="col-sm-3"><strong>Deadline:</strong> {{ project.end_date.strftime('%d %b %Y') if project.end_date else 'Ongoing' }}</div>
+      <div class="col-sm-3"><strong>Progress:</strong> {{ project.progress }}%</div>
+      <div class="col-sm-3"><strong>Lead:</strong> {{ project.creator.full_name }}</div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Tasks Column -->
+    <div class="col-lg-8">
+      <div class="card border p-4 shadow-sm mb-4" style="border-radius: 16px; background-color: var(--bg-card);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-list-check text-primary me-2"></i>Sprint Tasks ({{ tasks|length }})</h6>
+          <a href="{{ url_for('tasks.create') }}?project_id={{ project.id }}" class="btn btn-sm btn-primary" style="border-radius: 8px;">
+            <i class="fa-solid fa-plus me-1"></i> Add Task
+          </a>
+        </div>
+
+        <div class="list-group list-group-flush">
+          {% for t in tasks %}
+          <div class="list-group-item px-0 py-2.5 border-0 border-bottom d-flex align-items-center justify-content-between" style="background: transparent;">
+            <div>
+              <a href="{{ url_for('tasks.detail', task_id=t.id) }}" class="fw-semibold text-decoration-none text-primary" style="font-size: 0.85rem;">{{ t.title }}</a>
+              <div class="text-muted" style="font-size: 0.72rem;">Assigned to: {{ t.assignee.full_name if t.assignee else 'Unassigned' }}</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-secondary bg-opacity-25 text-primary" style="font-size: 0.7rem;">{{ t.status|replace('_', ' ')|title }}</span>
+              <a href="{{ url_for('tasks.detail', task_id=t.id) }}" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;">View</a>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted" style="font-size: 0.85rem;">No tasks created for this project yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Assigned Team Members Column -->
+    <div class="col-lg-4">
+      <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-users text-indigo me-2"></i>Project Engineers</h6>
+        <div class="list-group list-group-flush mb-3">
+          {% for member in project.members %}
+          <div class="list-group-item px-0 py-2 border-0 border-bottom d-flex align-items-center justify-content-between" style="background: transparent;">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-primary bg-opacity-15 text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                {{ member.user.full_name[0] }}
+              </div>
+              <div>
+                <div class="fw-semibold" style="font-size: 0.8rem;">{{ member.user.full_name }}</div>
+                <div class="text-muted" style="font-size: 0.68rem;">{{ member.role_in_project|title }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if current_user.role in ['admin', 'team_leader'] %}
+        <!-- Add Member to Project Form -->
+        <form method="POST" action="{{ url_for('projects.add_member', project_id=project.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="input-group input-group-sm mb-2">
+            <select name="user_id" class="form-select" required>
+              <option value="">-- Add Developer --</option>
+              {% for dev in all_developers %}
+                <option value="{{ dev.id }}">{{ dev.full_name }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-primary" type="submit">Add</button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

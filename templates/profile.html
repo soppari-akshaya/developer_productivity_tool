@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-2">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-bold tracking-tight mb-1">Account Profile</h3>
+      <p class="text-secondary mb-0" style="font-size: 0.9rem;">
+        Manage your profile details, contact information, and account settings.
+      </p>
+    </div>
+    <div>
+      <span class="badge badge-role-{{ user.role|replace('_', '-') }} px-3 py-2 fs-6">
+        <i class="fa-solid fa-shield-halved me-1"></i> {{ user.role_title }}
+      </span>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: User Summary Card & Photo Upload -->
+    <div class="col-lg-4">
+      <div class="profile-card overflow-hidden shadow-sm mb-4">
+        <!-- Decorative Header Banner -->
+        <div class="profile-header-banner"></div>
+
+        <div class="px-4 pb-4 text-center position-relative" style="margin-top: -55px;">
+          <!-- Profile Avatar with Initials Fallback -->
+          <div class="profile-avatar-wrapper mb-3">
+            {% if user.photo_url %}
+              <img src="{{ user.photo_url }}" alt="{{ user.full_name }}" class="profile-avatar-lg" id="avatar-preview-img">
+            {% else %}
+              <div class="profile-avatar-initials-lg mx-auto" id="avatar-preview-fallback">
+                {{ user.full_name[0] if user.full_name else 'U' }}
+              </div>
+            {% endif %}
+          </div>
+
+          <h4 class="fw-bold mb-1">{{ user.full_name }}</h4>
+          <p class="text-secondary mb-2" style="font-size: 0.9rem;">{{ user.email }}</p>
+
+          <div class="d-flex justify-content-center gap-2 mb-3">
+            <span class="badge badge-role-{{ user.role|replace('_', '-') }}">
+              {{ user.role_title }}
+            </span>
+            {% if user.department %}
+              <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-25">
+                {{ user.department }}
+              </span>
+            {% endif %}
+          </div>
+
+          {% if user.bio %}
+            <p class="text-secondary small fst-italic px-2 mb-3">
+              "{{ user.bio }}"
+            </p>
+          {% endif %}
+
+          <hr class="my-3 opacity-25">
+
+          <!-- Profile Photo Actions -->
+          <div class="text-start">
+            <label class="form-label fw-semibold text-uppercase small mb-2" style="letter-spacing: 0.5px;">Update Profile Photo</label>
+            <form method="POST" action="{{ url_for('auth.upload_photo') }}" enctype="multipart/form-data" class="mb-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="input-group input-group-sm mb-2">
+                <input type="file" name="photo" id="photo-input" class="form-control" accept=".png, .jpg, .jpeg, .webp" required>
+                <button type="submit" class="btn btn-primary px-3">
+                  <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload
+                </button>
+              </div>
+              <div class="form-text small" style="font-size: 0.72rem;">
+                Supported formats: PNG, JPG, JPEG, WEBP. Max size: 5MB.
+              </div>
+            </form>
+
+            {% if user.photo_url %}
+              <form method="POST" action="{{ url_for('auth.remove_photo') }}" class="mt-2 text-center">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Remove profile picture and reset to initials?');">
+                  <i class="fa-solid fa-trash me-1"></i> Remove Current Photo
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Account Metadata Card -->
+      <div class="profile-card p-4 shadow-sm">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-primary"></i> Account Activity
+        </h6>
+        <div class="d-flex flex-column gap-3 small">
+          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+            <span class="text-secondary">Role Assignment</span>
+            <span class="fw-semibold">{{ user.role_title }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+            <span class="text-secondary">Account Status</span>
+            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">
+              <i class="fa-solid fa-circle-check me-1"></i> Active
+            </span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+            <span class="text-secondary">Member Since</span>
+            <span class="fw-semibold">
+              {{ user.created_at.strftime('%b %d, %Y') if user.created_at else 'N/A' }}
+            </span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-secondary">Last Sign In</span>
+            <span class="fw-semibold">
+              {{ user.last_login.strftime('%b %d, %Y %H:%M') if user.last_login else 'Current Session' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Edit Profile Form -->
+    <div class="col-lg-8">
+      <div class="profile-card p-4 shadow-sm mb-4">
+        <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom">
+          <div>
+            <h5 class="fw-bold mb-1">Personal & Contact Information</h5>
+            <p class="text-secondary small mb-0">Update your account identity and contact details.</p>
+          </div>
+          <i class="fa-solid fa-user-pen text-primary fs-4 opacity-75"></i>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3 mb-3">
+            <!-- Full Name -->
+            <div class="col-md-6">
+              <label for="full_name" class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Full Name</label>
+              <div class="input-icon-wrapper">
+                <i class="fa-solid fa-user prefix-icon"></i>
+                <input type="text" class="form-control form-control-custom" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+              </div>
+            </div>
+
+            <!-- Email Address -->
+            <div class="col-md-6">
+              <label for="email" class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Email Address</label>
+              <div class="input-icon-wrapper">
+                <i class="fa-solid fa-envelope prefix-icon"></i>
+                <input type="email" class="form-control form-control-custom" id="email" name="email" value="{{ user.email }}" required>
+              </div>
+            </div>
+
+            <!-- Phone Number -->
+            <div class="col-md-6">
+              <label for="phone_number" class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Phone Number</label>
+              <div class="input-icon-wrapper">
+                <i class="fa-solid fa-phone prefix-icon"></i>
+                <input type="tel" class="form-control form-control-custom" id="phone_number" name="phone_number" value="{{ user.phone_number or '' }}" placeholder="+1 (555) 012-3456">
+              </div>
+            </div>
+
+            <!-- Department -->
+            <div class="col-md-6">
+              <label for="department" class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Department / Team</label>
+              <div class="input-icon-wrapper">
+                <i class="fa-solid fa-building prefix-icon"></i>
+                <input type="text" class="form-control form-control-custom" id="department" name="department" value="{{ user.department or '' }}" placeholder="e.g. Backend Engineering">
+              </div>
+            </div>
+
+            <!-- Role (Display Only - Protected from Editing) -->
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Platform Role</label>
+              <div class="p-3 rounded-3 bg-secondary bg-opacity-10 border d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="stat-icon bg-primary text-white" style="width: 36px; height: 36px; border-radius: 8px;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                  </div>
+                  <div>
+                    <span class="badge badge-role-{{ user.role|replace('_', '-') }} mb-1">
+                      {{ user.role_title }}
+                    </span>
+                    <div class="small text-muted">
+                      Your role is provisioned by organization governance and determines dashboard and feature access.
+                    </div>
+                  </div>
+                </div>
+                <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-25" title="Immutable by user">
+                  <i class="fa-solid fa-lock me-1"></i> Read-Only
+                </span>
+              </div>
+            </div>
+
+            <!-- Bio -->
+            <div class="col-12">
+              <label for="bio" class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">About / Bio</label>
+              <textarea class="form-control form-control-custom" id="bio" name="bio" rows="4" placeholder="Brief summary of your development role and expertise...">{{ user.bio or '' }}</textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+              <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Quick Links Card -->
+      <div class="profile-card p-4 shadow-sm">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="fa-solid fa-gauge-high text-primary"></i> Workspace Navigation
+        </h6>
+        <div class="row g-3">
+          {% if user.role == 'admin' %}
+            <div class="col-md-4">
+              <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-gauge-high"></i> Admin Dashboard
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-users-gear"></i> Manage Users
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{{ url_for('admin.reports') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-chart-pie"></i> System Reports
+              </a>
+            </div>
+          {% elif user.role == 'team_leader' %}
+            <div class="col-md-4">
+              <a href="{{ url_for('team_leader.dashboard') }}" class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-gauge-high"></i> Leader Dashboard
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{{ url_for('team_leader.members') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-users"></i> Team Members
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-diagram-project"></i> Projects
+              </a>
+            </div>
+          {% else %}
+            <div class="col-md-4">
+              <a href="{{ url_for('developer.dashboard') }}" class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-gauge-high"></i> Workspace
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-list-check"></i> My Tasks
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{{ url_for('snippets.list_snippets') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-code"></i> Code Vault
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

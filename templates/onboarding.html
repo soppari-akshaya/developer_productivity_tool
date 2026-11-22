@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+  <div class="card p-4 p-sm-5 border shadow-lg" style="max-width: 520px; width: 100%; border-radius: 20px; background-color: var(--bg-card);">
+    <div class="text-center mb-4">
+      {% if pending_user.picture %}
+        <img src="{{ pending_user.picture }}" alt="Avatar" class="rounded-circle border border-primary border-2 mb-3 shadow" style="width: 72px; height: 72px; object-fit: cover;">
+      {% else %}
+        <div class="stat-icon bg-primary text-white mx-auto mb-3" style="width: 64px; height: 64px; border-radius: 16px;">
+          <i class="fa-solid fa-sparkles fs-3"></i>
+        </div>
+      {% endif %}
+      <span class="badge bg-primary bg-opacity-15 text-primary border border-primary border-opacity-25 px-3 py-1 rounded-pill mb-2">
+        <i class="fa-solid fa-user-shield me-1"></i> First-Time OAuth Setup
+      </span>
+      <h3 class="fw-bold tracking-tight mb-1">Welcome, {{ pending_user.full_name }}!</h3>
+      <p class="text-muted" style="font-size: 0.88rem;">Select your professional role to personalize your workspace layout.</p>
+    </div>
+
+    <div id="auth-alert-container"></div>
+
+    <form id="onboarding-form">
+      <!-- Full Name -->
+      <div class="mb-3">
+        <label for="full_name" class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Full Name</label>
+        <div class="input-icon-wrapper">
+          <i class="fa-solid fa-user prefix-icon"></i>
+          <input type="text" id="full_name" class="form-control form-control-custom" value="{{ pending_user.full_name }}" required>
+        </div>
+      </div>
+
+      <!-- Email (Readonly) -->
+      <div class="mb-3">
+        <label for="email_display" class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Verified OAuth Email</label>
+        <div class="input-icon-wrapper">
+          <i class="fa-solid fa-envelope prefix-icon"></i>
+          <input type="email" id="email_display" class="form-control form-control-custom opacity-75" value="{{ pending_user.email }}" readonly>
+        </div>
+      </div>
+
+      <!-- Role Selection Cards -->
+      <div class="mb-4">
+        <label class="form-label text-uppercase fw-semibold d-block mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+          Select Your Workspace Role <span class="text-danger">*</span>
+        </label>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="card p-3 h-100 border text-center cursor-pointer" style="border-radius: 14px; cursor: pointer;">
+              <input type="radio" name="role" value="developer" class="form-check-input mb-2 mx-auto" checked>
+              <div class="fw-bold fs-6"><i class="fa-solid fa-code text-primary me-1"></i> Developer</div>
+              <div class="text-muted mt-1" style="font-size: 0.75rem;">Sprint task board, snippet vault, code scratchpad & Pomodoro timer.</div>
+            </label>
+          </div>
+          <div class="col-6">
+            <label class="card p-3 h-100 border text-center cursor-pointer" style="border-radius: 14px; cursor: pointer;">
+              <input type="radio" name="role" value="team_leader" class="form-check-input mb-2 mx-auto">
+              <div class="fw-bold fs-6"><i class="fa-solid fa-users text-indigo me-1"></i> Team Leader</div>
+              <div class="text-muted mt-1" style="font-size: 0.75rem;">Team management, velocity metrics, project creation & work log reviews.</div>
+            </label>
+          </div>
+        </div>
+        <div class="form-text text-muted mt-2" style="font-size: 0.72rem;">
+          <i class="fa-solid fa-circle-info text-info me-1"></i> Admin roles cannot be self-selected and are granted by platform administrators.
+        </div>
+      </div>
+
+      <button type="submit" id="onboarding-btn" class="btn btn-primary w-100 py-2.5 fw-semibold" style="border-radius: 12px;">
+        <i class="fa-solid fa-arrow-right-to-bracket me-2"></i>Enter My Workspace
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}
+

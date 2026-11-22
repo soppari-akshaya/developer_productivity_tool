@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+      <div class="card border p-4 p-sm-5 shadow-sm text-center mb-4" style="border-radius: 20px; background-color: var(--bg-card);">
+        <!-- Mode Tabs -->
+        <div class="d-inline-flex bg-primary bg-opacity-10 p-1 rounded-pill mb-4 mx-auto gap-1">
+          <button type="button" class="btn btn-sm pomo-tab-btn active rounded-pill px-3 py-1.5 fw-semibold" data-mode="focus" style="font-size: 0.8rem;">
+            Focus (25m)
+          </button>
+          <button type="button" class="btn btn-sm pomo-tab-btn rounded-pill px-3 py-1.5 fw-semibold" data-mode="short_break" style="font-size: 0.8rem;">
+            Short Break (5m)
+          </button>
+          <button type="button" class="btn btn-sm pomo-tab-btn rounded-pill px-3 py-1.5 fw-semibold" data-mode="long_break" style="font-size: 0.8rem;">
+            Long Break (15m)
+          </button>
+        </div>
+
+        <div class="mb-2">
+          <span id="pomo-mode-badge" class="badge bg-danger bg-opacity-15 text-danger px-3 py-1 rounded-pill" style="font-size: 0.75rem;">
+            FOCUS
+          </span>
+        </div>
+
+        <!-- Big Countdown Clock -->
+        <div class="py-4">
+          <div id="pomodoro-display" class="display-1 fw-extrabold font-monospace text-primary tracking-tighter">
+            25:00
+          </div>
+          <p class="text-muted mt-2" style="font-size: 0.85rem;">Eliminate distractions. Stay in deep flow.</p>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="d-flex justify-content-center gap-3">
+          <button type="button" id="pomo-start-btn" class="btn btn-primary px-5 py-2.5 fw-bold text-uppercase tracking-wider" style="border-radius: 14px; font-size: 0.9rem;">
+            <i class="fa-solid fa-play me-2"></i> Start Focus
+          </button>
+          <button type="button" id="pomo-pause-btn" class="btn btn-warning px-5 py-2.5 fw-bold text-uppercase tracking-wider d-none" style="border-radius: 14px; font-size: 0.9rem;">
+            <i class="fa-solid fa-pause me-2"></i> Pause
+          </button>
+          <button type="button" id="pomo-reset-btn" class="btn btn-outline-secondary px-3 py-2.5" style="border-radius: 14px;" title="Reset">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+        </div>
+
+        <div class="border-top pt-3 mt-4 text-muted" style="font-size: 0.78rem;">
+          <i class="fa-solid fa-fire text-danger me-1"></i> Today's completed sessions: <strong class="text-primary">{{ today_sessions }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+{% endblock %}
+
