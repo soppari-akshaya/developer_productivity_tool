@@ -30,7 +30,7 @@
         </div>
       </div>
 
-      <div class="row g-3 mb-4">
+      <div class="row g-3 mb-3">
         <div class="col-6">
           <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Priority</label>
           <select name="priority" class="form-select form-control-custom">
@@ -51,6 +51,20 @@
         </div>
       </div>
 
+      {% if assignable_users %}
+      <div class="mb-4">
+        <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">
+          Assign Team Members (Optional)
+        </label>
+        <select name="assigned_developers" class="form-select form-control-custom" multiple size="3" style="font-size: 0.85rem;">
+          {% for u in assignable_users %}
+            <option value="{{ u.id }}">{{ u.full_name }} ({{ u.role_title if u.role_title else u.role|title }})</option>
+          {% endfor %}
+        </select>
+        <div class="form-text text-muted" style="font-size: 0.7rem;">Hold Ctrl (or Cmd) to select multiple members. Members can also be added anytime after creation.</div>
+      </div>
+      {% endif %}
+
       <div class="d-flex justify-content-end gap-2">
         <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary btn-sm px-3">Cancel</a>
         <button type="submit" class="btn btn-primary btn-sm px-4">Create Project</button>
@@ -59,4 +73,3 @@
   </div>
 </div>
 {% endblock %}
-

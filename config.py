@@ -42,3 +42,9 @@ class Config:
     GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID', '').strip().strip('"\'')
     GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET', '').strip().strip('"\'')
     GITHUB_CALLBACK_URL = os.getenv('GITHUB_CALLBACK_URL', '').strip().strip('"\'')
+
+    # xAI Grok API Configuration
+    XAI_API_KEY = os.getenv('XAI_API_KEY', '').strip().strip('"\'')
+    XAI_BASE_URL = os.getenv('XAI_BASE_URL', 'https://api.x.ai/v1').strip().strip('"\'')
+    XAI_MODEL = os.getenv('XAI_MODEL', 'grok-4.7').strip().strip('"\'')
+

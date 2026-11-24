@@ -26,7 +26,7 @@
             <td>{{ log.work_performed }}</td>
             <td class="text-muted">{{ log.completed_tasks or 'None noted' }}</td>
             <td class="text-danger">{{ log.challenges or 'None' }}</td>
-            <td><span class="badge bg-primary bg-opacity-15 text-primary">{{ log.hours_worked }} hrs</span></td>
+            <td><span class="badge badge-hours">{{ log.hours_worked }} hrs</span></td>
           </tr>
           {% else %}
           <tr>

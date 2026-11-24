@@ -35,7 +35,7 @@
             <small class="text-muted" style="font-size: 0.72rem;">{{ s.description or 'No description' }}</small>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-secondary bg-opacity-25 text-primary text-uppercase font-monospace" style="font-size: 0.7rem;">{{ s.language }}</span>
+            <span class="badge bg-secondary bg-opacity-25 text-primary text-uppercase font-monospace">{{ s.language }}</span>
             <form method="POST" action="{{ url_for('snippets.toggle_favorite', snippet_id=s.id) }}" class="d-inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-sm p-0 border-0 text-{{ 'warning' if s.is_favorite else 'muted' }}">

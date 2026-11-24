@@ -4,13 +4,22 @@
 <div class="container-fluid p-0">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-      <h5 class="fw-bold mb-1">Task Management</h5>
+      <h5 class="fw-bold mb-1">
+        Task Management 
+        <span class="badge bg-primary bg-opacity-15 text-primary ms-1" style="font-size: 0.78rem;">{{ tasks|length }}</span>
+      </h5>
       <p class="text-muted mb-0" style="font-size: 0.85rem;">Sprint deliverables, backlog items, and assignments.</p>
     </div>
 
-    <div class="d-flex align-items-center gap-2">
-      <form method="GET" action="{{ url_for('tasks.list_tasks') }}" class="d-flex gap-2">
-        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width: 140px;">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <form method="GET" action="{{ url_for('tasks.list_tasks') }}" class="d-flex gap-2 flex-wrap align-items-center">
+        <select name="project_id" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width: 160px;">
+          <option value="" {% if not selected_project_id or selected_project_id == 'all' %}selected{% endif %}>All Projects</option>
+          {% for p in projects %}
+            <option value="{{ p.id }}" {% if selected_project_id|string == p.id|string %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width: 135px;">
           <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
           <option value="todo" {% if status_filter == 'todo' %}selected{% endif %}>To Do</option>
           <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
@@ -24,6 +33,11 @@
           <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Medium</option>
           <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Low</option>
         </select>
+        {% if (status_filter and status_filter != 'all') or (priority_filter and priority_filter != 'all') or (selected_project_id and selected_project_id != 'all' and selected_project_id != '') %}
+          <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center" title="Clear All Filters" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-xmark me-1"></i> Clear
+          </a>
+        {% endif %}
       </form>
 
       <a href="{{ url_for('tasks.create') }}" class="btn btn-sm btn-primary">
@@ -66,7 +80,7 @@
             </td>
             <td class="text-muted">{{ t.project.name if t.project else 'General' }}</td>
             <td>
-              <span class="badge bg-secondary bg-opacity-15 text-primary" style="font-size: 0.75rem;">
+              <span class="badge bg-secondary bg-opacity-15 text-primary">
                 {{ t.assignee.full_name if t.assignee else 'Unassigned' }}
               </span>
             </td>

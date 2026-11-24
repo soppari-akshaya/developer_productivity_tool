@@ -1,0 +1,144 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<</Type /Catalog /Pages 2 0 R>>
+endobj
+2 0 obj
+<</Type /Pages /Kids [2 0 R] /Count 1>>
+endobj
+3 0 obj
+<</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+endobj
+4 0 obj
+<</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold>>
+endobj
+5 0 obj
+<</Type /Font /Subtype /Type1 /BaseFont /Courier>>
+endobj
+6 0 obj
+<</Length 3753>>
+stream
+q
+0.980 0.980 0.990 rg
+0.00 0.00 595.28 841.89 re
+f
+Q
+q
+0.090 0.220 0.540 rg
+1.5 w
+0.140 0.380 0.920 RG
+54.00 712.89 487.28 75.00 re
+B
+Q
+q BT /F2 18 Tf 1.000 1.000 1.000 rg 74.00 756.89 Td (Developer Productivity Tool) Tj ET Q
+q BT /F1 10 Tf 0.780 0.860 0.980 rg 74.00 734.89 Td (Application Quality Assurance & Testing Report) Tj ET Q
+q BT /F2 14 Tf 0.090 0.220 0.540 rg 54.00 673.89 Td (1. Executive Summary) Tj ET Q
+q
+0.850 0.900 0.980 rg
+54.00 669.89 487.28 1.50 re
+f
+Q
+q BT /F1 9.5 Tf 0.200 0.250 0.320 rg 54.00 647.89 Td (This document details the comprehensive testing suite execution for the Developer Productivity) Tj ET Q
+q BT /F1 9.5 Tf 0.200 0.250 0.320 rg 54.00 633.89 Td (Tool. All functional requirements, regression tests, role-based access permissions, and UI/UX) Tj ET Q
+q BT /F1 9.5 Tf 0.200 0.250 0.320 rg 54.00 619.89 Td (integrations have been thoroughly evaluated.) Tj ET Q
+q BT /F2 14 Tf 0.090 0.220 0.540 rg 54.00 589.89 Td (2. Test Results Matrix) Tj ET Q
+q
+0.850 0.900 0.980 rg
+54.00 585.89 487.28 1.50 re
+f
+Q
+q
+0.140 0.380 0.920 rg
+54.00 557.89 487.00 20.00 re
+f
+Q
+q BT /F2 8.5 Tf 1.000 1.000 1.000 rg 60.00 562.89 Td (Module) Tj ET Q
+q BT /F2 8.5 Tf 1.000 1.000 1.000 rg 200.00 562.89 Td (Test Scope) Tj ET Q
+q BT /F2 8.5 Tf 1.000 1.000 1.000 rg 400.00 562.89 Td (Test Count) Tj ET Q
+q BT /F2 8.5 Tf 1.000 1.000 1.000 rg 470.00 562.89 Td (Result) Tj ET Q
+q
+1.000 1.000 1.000 rg
+0.5 w
+0.880 0.900 0.940 RG
+54.00 537.89 487.00 20.00 re
+B
+Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 60.00 542.89 Td (Authentication & RBAC) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 200.00 542.89 Td (Login, Registration, Passwords, Role Access) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 400.00 542.89 Td (6) Tj ET Q
+q BT /F2 8 Tf 0.080 0.550 0.240 rg 470.00 542.89 Td (PASS) Tj ET Q
+q
+0.950 0.970 1.000 rg
+0.5 w
+0.880 0.900 0.940 RG
+54.00 517.89 487.00 20.00 re
+B
+Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 60.00 522.89 Td (Project Management) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 200.00 522.89 Td (Multi-role Project Creation & Visibility) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 400.00 522.89 Td (5) Tj ET Q
+q BT /F2 8 Tf 0.080 0.550 0.240 rg 470.00 522.89 Td (PASS) Tj ET Q
+q
+1.000 1.000 1.000 rg
+0.5 w
+0.880 0.900 0.940 RG
+54.00 497.89 487.00 20.00 re
+B
+Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 60.00 502.89 Td (Task Management) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 200.00 502.89 Td (Sprint Tasks, 4-Task Visibility, Filters) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 400.00 502.89 Td (5) Tj ET Q
+q BT /F2 8 Tf 0.080 0.550 0.240 rg 470.00 502.89 Td (PASS) Tj ET Q
+q
+0.950 0.970 1.000 rg
+0.5 w
+0.880 0.900 0.940 RG
+54.00 477.89 487.00 20.00 re
+B
+Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 60.00 482.89 Td (Time Tracker) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 200.00 482.89 Td (Persistent Timer, SQLite Storage, Dashboard) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 400.00 482.89 Td (6) Tj ET Q
+q BT /F2 8 Tf 0.080 0.550 0.240 rg 470.00 482.89 Td (PASS) Tj ET Q
+q
+1.000 1.000 1.000 rg
+0.5 w
+0.880 0.900 0.940 RG
+54.00 457.89 487.00 20.00 re
+B
+Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 60.00 462.89 Td (Online Code Editor) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 200.00 462.89 Td (JS, Python, HTML, CSS, SQL Execution) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 400.00 462.89 Td (5) Tj ET Q
+q BT /F2 8 Tf 0.080 0.550 0.240 rg 470.00 462.89 Td (PASS) Tj ET Q
+q
+0.950 0.970 1.000 rg
+0.5 w
+0.880 0.900 0.940 RG
+54.00 437.89 487.00 20.00 re
+B
+Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 60.00 442.89 Td (UI & Contrast) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 200.00 442.89 Td (WCAG AA/AAA Badge & Theme Readability) Tj ET Q
+q BT /F1 8 Tf 0.100 0.150 0.250 rg 400.00 442.89 Td (7) Tj ET Q
+q BT /F2 8 Tf 0.080 0.550 0.240 rg 470.00 442.89 Td (PASS) Tj ET Q
+endstream
+endobj
+7 0 obj
+<</Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 1 0 R /Resources <</Font <</F1 3 0 R /F2 4 0 R /F3 5 0 R>> /ProcSet [/PDF /Text /ImageB /ImageC /ImageI]>>>>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000062 00000 n 
+0000000117 00000 n 
+0000000185 00000 n 
+0000000258 00000 n 
+0000000324 00000 n 
+0000004127 00000 n 
+trailer
+<</Size 8 /Root 1 0 R>>
+startxref
+4319
+%%EOF

@@ -17,10 +17,12 @@
       </div>
 
       <div class="d-flex align-items-center gap-2">
-        {% if current_user.role in ['admin', 'team_leader'] or project.created_by_id == current_user.id %}
+        {% if can_edit %}
           <a href="{{ url_for('projects.edit', project_id=project.id) }}" class="btn btn-sm btn-outline-secondary">
             <i class="fa-solid fa-pen-to-square me-1"></i> Edit Project
           </a>
+        {% endif %}
+        {% if can_delete %}
           <form method="POST" action="{{ url_for('projects.delete', project_id=project.id) }}" onsubmit="return confirm('Are you sure you want to delete this project?');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -35,7 +37,13 @@
       <div class="col-sm-3"><strong>Start Date:</strong> {{ project.start_date.strftime('%d %b %Y') if project.start_date else 'N/A' }}</div>
       <div class="col-sm-3"><strong>Deadline:</strong> {{ project.end_date.strftime('%d %b %Y') if project.end_date else 'Ongoing' }}</div>
       <div class="col-sm-3"><strong>Progress:</strong> {{ project.progress }}%</div>
-      <div class="col-sm-3"><strong>Lead:</strong> {{ project.creator.full_name }}</div>
+      <div class="col-sm-3">
+        <strong>Owner:</strong> 
+        <span class="badge bg-primary bg-opacity-15 text-primary">{{ project.creator.full_name }}</span>
+        {% if project.created_by_id == current_user.id %}
+          <span class="badge bg-success bg-opacity-15 text-success ms-1">You</span>
+        {% endif %}
+      </div>
     </div>
   </div>
 
@@ -58,7 +66,7 @@
               <div class="text-muted" style="font-size: 0.72rem;">Assigned to: {{ t.assignee.full_name if t.assignee else 'Unassigned' }}</div>
             </div>
             <div class="d-flex align-items-center gap-2">
-              <span class="badge bg-secondary bg-opacity-25 text-primary" style="font-size: 0.7rem;">{{ t.status|replace('_', ' ')|title }}</span>
+              <span class="badge bg-secondary bg-opacity-25 text-primary">{{ t.status|replace('_', ' ')|title }}</span>
               <a href="{{ url_for('tasks.detail', task_id=t.id) }}" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;">View</a>
             </div>
           </div>
@@ -72,7 +80,7 @@
     <!-- Assigned Team Members Column -->
     <div class="col-lg-4">
       <div class="card border p-4 shadow-sm" style="border-radius: 16px; background-color: var(--bg-card);">
-        <h6 class="fw-bold mb-3"><i class="fa-solid fa-users text-indigo me-2"></i>Project Engineers</h6>
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-users text-indigo me-2"></i>Project Team Members ({{ project.members|length }})</h6>
         <div class="list-group list-group-flush mb-3">
           {% for member in project.members %}
           <div class="list-group-item px-0 py-2 border-0 border-bottom d-flex align-items-center justify-content-between" style="background: transparent;">
@@ -81,32 +89,63 @@
                 {{ member.user.full_name[0] }}
               </div>
               <div>
-                <div class="fw-semibold" style="font-size: 0.8rem;">{{ member.user.full_name }}</div>
-                <div class="text-muted" style="font-size: 0.68rem;">{{ member.role_in_project|title }}</div>
+                <div class="fw-semibold" style="font-size: 0.8rem;">
+                  {{ member.user.full_name }}
+                  {% if member.user_id == project.created_by_id %}
+                    <span class="badge bg-primary bg-opacity-15 text-primary">Creator</span>
+                  {% endif %}
+                </div>
+                <div class="text-muted" style="font-size: 0.68rem;">{{ member.role_in_project|title }} ({{ member.user.role_title if member.user.role_title else member.user.role|title }})</div>
               </div>
             </div>
+
+            {% if can_manage_members and member.user_id != project.created_by_id %}
+            <form method="POST" action="{{ url_for('projects.remove_member', project_id=project.id, member_id=member.id) }}" onsubmit="return confirm('Remove {{ member.user.full_name }} from project?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Remove member">
+                <i class="fa-solid fa-user-minus" style="font-size: 0.75rem;"></i>
+              </button>
+            </form>
+            {% endif %}
           </div>
           {% endfor %}
         </div>
 
-        {% if current_user.role in ['admin', 'team_leader'] %}
+        {% if can_manage_members and available_candidates %}
         <!-- Add Member to Project Form -->
         <form method="POST" action="{{ url_for('projects.add_member', project_id=project.id) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="input-group input-group-sm mb-2">
-            <select name="user_id" class="form-select" required>
-              <option value="">-- Add Developer --</option>
-              {% for dev in all_developers %}
-                <option value="{{ dev.id }}">{{ dev.full_name }}</option>
+          <div class="mb-2">
+            <select name="user_id" class="form-select form-select-sm" required>
+              <option value="">
+                {% if current_user.role == 'admin' %}
+                  -- Assign Team Leader or Developer --
+                {% else %}
+                  -- Assign Developer --
+                {% endif %}
+              </option>
+              {% for candidate in available_candidates %}
+                <option value="{{ candidate.id }}">{{ candidate.full_name }} ({{ candidate.role_title if candidate.role_title else candidate.role|title }})</option>
               {% endfor %}
             </select>
-            <button class="btn btn-primary" type="submit">Add</button>
           </div>
+          {% if current_user.role == 'admin' %}
+          <div class="input-group input-group-sm mb-2">
+            <select name="role_in_project" class="form-select">
+              <option value="developer" selected>Project Developer</option>
+              <option value="lead">Project Lead</option>
+            </select>
+            <button class="btn btn-primary" type="submit">Assign</button>
+          </div>
+          {% else %}
+          <button class="btn btn-sm btn-primary w-100" type="submit"><i class="fa-solid fa-user-plus me-1"></i> Assign Developer</button>
+          {% endif %}
         </form>
+        {% elif can_manage_members %}
+          <div class="text-muted small text-center pt-2">All eligible colleagues are currently assigned.</div>
         {% endif %}
       </div>
     </div>
   </div>
 </div>
 {% endblock %}
-

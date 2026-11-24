@@ -19,11 +19,10 @@
         </select>
       </form>
 
-      {% if current_user.role in ['admin', 'team_leader'] %}
+      <!-- New Project button is visible for all roles (Admin, Team Leader, Developer) -->
       <a href="{{ url_for('projects.create') }}" class="btn btn-sm btn-primary">
         <i class="fa-solid fa-plus me-1"></i> New Project
       </a>
-      {% endif %}
     </div>
   </div>
 
@@ -35,11 +34,19 @@
           <h6 class="fw-bold mb-0 text-truncate" style="max-width: 220px;">
             <a href="{{ url_for('projects.detail', project_id=p.id) }}" class="text-decoration-none text-primary">{{ p.name }}</a>
           </h6>
-          <span class="badge bg-{{ 'danger' if p.priority == 'critical' else ('warning' if p.priority == 'high' else 'primary') }} bg-opacity-15 text-{{ 'danger' if p.priority == 'critical' else ('warning' if p.priority == 'high' else 'primary') }}" style="font-size: 0.7rem;">
+          <span class="badge bg-{{ 'danger' if p.priority == 'critical' else ('warning' if p.priority == 'high' else 'primary') }} bg-opacity-15 text-{{ 'danger' if p.priority == 'critical' else ('warning' if p.priority == 'high' else 'primary') }}">
             {{ p.priority|upper }}
           </span>
         </div>
-        <p class="text-muted text-truncate mb-3" style="font-size: 0.8rem;">{{ p.description or 'No project description recorded.' }}</p>
+        <p class="text-muted text-truncate mb-2" style="font-size: 0.8rem;">{{ p.description or 'No project description recorded.' }}</p>
+
+        <div class="d-flex align-items-center gap-1.5 mb-3" style="font-size: 0.72rem;">
+          <span class="text-muted">Owner:</span>
+          <span class="badge bg-primary bg-opacity-10 text-primary fw-medium">{{ p.creator.full_name }}</span>
+          {% if p.created_by_id == current_user.id %}
+            <span class="badge bg-success bg-opacity-15 text-success">You Own</span>
+          {% endif %}
+        </div>
 
         <div class="mb-3">
           <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 0.72rem;">
@@ -64,15 +71,12 @@
         <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary opacity-50"></i>
         <h6 class="fw-semibold">No Projects Available</h6>
         <p class="small mb-3">No software projects have been created yet. Create your first project to get started.</p>
-        {% if current_user.role in ['admin', 'team_leader'] %}
         <a href="{{ url_for('projects.create') }}" class="btn btn-sm btn-primary">
           <i class="fa-solid fa-plus me-1"></i> Create First Project
         </a>
-        {% endif %}
       </div>
     </div>
     {% endfor %}
   </div>
 </div>
 {% endblock %}
-

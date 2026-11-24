@@ -124,7 +124,7 @@
                 <div class="text-muted" style="font-size: 0.72rem;">{{ m.email }}</div>
               </div>
             </div>
-            <span class="badge bg-success bg-opacity-15 text-success" style="font-size: 0.7rem;">Active</span>
+            <span class="badge bg-success bg-opacity-15 text-success">Active</span>
           </div>
           {% endfor %}
         </div>
@@ -155,7 +155,7 @@
             <td class="fw-semibold">{{ log.user.full_name }}</td>
             <td class="text-muted">{{ log.date.strftime('%d %b %Y') }}</td>
             <td class="text-truncate" style="max-width: 400px;">{{ log.work_performed }}</td>
-            <td><span class="badge bg-secondary bg-opacity-15 text-primary">{{ log.hours_worked }} hrs</span></td>
+            <td><span class="badge badge-hours">{{ log.hours_worked }} hrs</span></td>
           </tr>
           {% else %}
           <tr>

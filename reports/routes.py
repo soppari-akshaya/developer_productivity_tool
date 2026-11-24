@@ -1,7 +1,8 @@
 import csv
 import io
+import os
 from datetime import datetime, date, timedelta
-from flask import render_template, request, Response, jsonify
+from flask import render_template, request, Response, jsonify, send_file, current_app
 from flask_login import login_required, current_user
 from extensions import db
 from models import Task, Project, TimeEntry, PomodoroSession, WorkLog, User
@@ -110,5 +111,31 @@ def export_csv():
         output.getvalue(),
         mimetype='text/csv',
         headers={"Content-Disposition": f"attachment;filename=productivity_tasks_{date.today()}.csv"}
+    )
+
+@reports_bp.route('/reports/download/pdf')
+@login_required
+def download_pdf():
+    pdf_path = os.path.join(current_app.root_path, 'developer_productivity_tool_testing_report.pdf')
+    if not os.path.exists(pdf_path):
+        pdf_path = os.path.join(current_app.root_path, 'static', 'reports', 'developer_productivity_tool_testing_report.pdf')
+    return send_file(
+        pdf_path,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name='developer_productivity_tool_testing_report.pdf'
+    )
+
+@reports_bp.route('/reports/download/doc')
+@login_required
+def download_doc():
+    doc_path = os.path.join(current_app.root_path, 'developer_productivity_tool_testing_report.doc')
+    if not os.path.exists(doc_path):
+        doc_path = os.path.join(current_app.root_path, 'static', 'reports', 'developer_productivity_tool_testing_report.doc')
+    return send_file(
+        doc_path,
+        mimetype='application/msword',
+        as_attachment=True,
+        download_name='developer_productivity_tool_testing_report.doc'
     )
 

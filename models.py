@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
@@ -43,6 +43,7 @@ class User(UserMixin, db.Model):
     notifications = db.relationship('Notification', backref='user', lazy=True, cascade='all, delete-orphan')
     activity_logs = db.relationship('ActivityLog', backref='user', lazy=True, cascade='all, delete-orphan')
     github_connection = db.relationship('GitHubConnection', backref='user', uselist=False, cascade='all, delete-orphan')
+    active_timer = db.relationship('ActiveTimer', backref='user', uselist=False, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<User {self.email} ({self.role})>'
@@ -138,9 +139,89 @@ class TimeEntry(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
     duration_minutes = db.Column(db.Integer, nullable=False)
+    duration_seconds = db.Column(db.Integer, nullable=True)
+    start_time = db.Column(db.DateTime, nullable=True)
+    end_time = db.Column(db.DateTime, nullable=True)
     description = db.Column(db.String(255), nullable=True)
     date = db.Column(db.Date, default=datetime.utcnow().date)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    project = db.relationship('Project', backref=db.backref('time_entries', lazy=True))
+
+    @property
+    def display_start_time(self):
+        if self.start_time:
+            return self.start_time.strftime('%H:%M:%S')
+        elif self.created_at and self.duration_minutes:
+            est_start = self.created_at - timedelta(minutes=self.duration_minutes)
+            return est_start.strftime('%H:%M:%S')
+        return self.created_at.strftime('%H:%M:%S') if self.created_at else '--'
+
+    @property
+    def display_end_time(self):
+        if self.end_time:
+            return self.end_time.strftime('%H:%M:%S')
+        return self.created_at.strftime('%H:%M:%S') if self.created_at else '--'
+
+    @property
+    def formatted_duration(self):
+        secs = self.duration_seconds if self.duration_seconds is not None else ((self.duration_minutes or 0) * 60)
+        hrs = secs // 3600
+        mins = (secs % 3600) // 60
+        s = secs % 60
+        if hrs > 0:
+            return f"{hrs:02d}h {mins:02d}m {s:02d}s"
+        return f"{mins:02d}m {s:02d}s"
+
+
+class ActiveTimer(db.Model):
+    __tablename__ = 'active_timers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+    start_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_started_at = db.Column(db.DateTime, nullable=True)
+    accumulated_seconds = db.Column(db.Integer, default=0, nullable=False)
+    status = db.Column(db.String(20), default='running', nullable=False)  # 'running', 'paused', 'stopped'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    project = db.relationship('Project', backref=db.backref('active_timers', lazy=True))
+    task = db.relationship('Task', backref=db.backref('active_timers', lazy=True))
+
+    def get_elapsed_seconds(self):
+        if self.status == 'running' and self.last_started_at:
+            delta = int((datetime.utcnow() - self.last_started_at).total_seconds())
+            return self.accumulated_seconds + max(0, delta)
+        return self.accumulated_seconds
+
+    def to_dict(self):
+        elapsed = self.get_elapsed_seconds()
+        hrs = elapsed // 3600
+        mins = (elapsed % 3600) // 60
+        secs = elapsed % 60
+        formatted = f"{hrs:02d}:{mins:02d}:{secs:02d}"
+
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'project_id': self.project_id,
+            'project_name': self.project.name if self.project else None,
+            'task_id': self.task_id,
+            'task_title': self.task.title if self.task else None,
+            'description': self.description or '',
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'last_started_at': self.last_started_at.isoformat() if self.last_started_at else None,
+            'accumulated_seconds': self.accumulated_seconds,
+            'elapsed_seconds': elapsed,
+            'formatted_time': formatted,
+            'status': self.status
+        }
 
 
 class PomodoroSession(db.Model):
@@ -229,4 +310,28 @@ class Announcement(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     creator = db.relationship('User', backref='announcements', foreign_keys=[created_by_id])
+
+
+class AIChatMessage(db.Model):
+    __tablename__ = 'ai_chat_messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    role = db.Column(db.String(20), nullable=False)  # 'user', 'assistant', 'system'
+    content = db.Column(db.Text, nullable=False)
+    message_type = db.Column(db.String(50), default='chat')  # 'chat', 'task', 'bug', 'summary', 'code'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    user = db.relationship('User', backref=db.backref('ai_messages', lazy=True, cascade='all, delete-orphan'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'role': self.role,
+            'content': self.content,
+            'message_type': self.message_type,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 

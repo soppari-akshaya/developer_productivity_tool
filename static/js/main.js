@@ -1,27 +1,37 @@
 /**
- * Main application JavaScript: Theme toggle, tooltips, clipboard helpers.
+ * Main application JavaScript: Theme toggle, tooltips, clipboard helpers,
+ * and Global Persistent Time Tracker Client.
  */
 document.addEventListener('DOMContentLoaded', () => {
   // Theme switcher
   const themeToggleBtns = document.querySelectorAll('.theme-toggle-btn');
-  const currentTheme = localStorage.getItem('dpt_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const savedTheme = localStorage.getItem('dpt_theme');
+  const initialTheme = savedTheme || document.documentElement.getAttribute('data-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('dpt_theme', theme);
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    try {
+      localStorage.setItem('dpt_theme', theme);
+    } catch (e) {}
+
     themeToggleBtns.forEach(btn => {
       btn.innerHTML = theme === 'dark' 
         ? '<i class="fa-solid fa-sun text-warning"></i>' 
         : '<i class="fa-solid fa-moon text-secondary"></i>';
+      btn.setAttribute('title', theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+      btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
     });
   }
 
-  applyTheme(currentTheme);
+  applyTheme(initialTheme);
 
   themeToggleBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const active = document.documentElement.getAttribute('data-theme') || 'light';
-      applyTheme(active === 'dark' ? 'light' : 'dark');
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const targetTheme = current === 'dark' ? 'light' : 'dark';
+      applyTheme(targetTheme);
     });
   });
 
@@ -46,4 +56,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-

@@ -1,9 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ page_title or 'Developer Productivity Tool' }}</title>
+
+  <!-- Immediate Theme Initialization (Prevents Theme Flash Before Page Paint) -->
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('dpt_theme');
+        var theme = savedTheme || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
 
   <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,6 +35,7 @@
 
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ai_assistant.css') }}">
 
   <!-- Injected Firebase Public Configuration -->
   <script>
@@ -167,7 +181,7 @@
           <h5 class="mb-0 fw-bold">{{ page_title or 'Dashboard' }}</h5>
         </div>
 
-        <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2 gap-sm-3">
           <!-- Light/Dark Mode Switcher -->
           <button class="btn btn-sm btn-outline-secondary theme-toggle-btn rounded-circle" style="width: 36px; height: 36px;" title="Toggle Theme">
             <i class="fa-solid fa-moon"></i>
@@ -223,10 +237,25 @@
     </div>
   </div>
 
+  <!-- Developer Productivity Tool Assistant Widget -->
+  {% include "ai_assistant/assistant.html" %}
+
 {% else %}
   <!-- Public Shell (Split-Screen Auth Pages) -->
   {% block auth_content %}{% endblock %}
 {% endif %}
+
+<!-- Toast Notification for Timer and Alerts -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+  <div id="appToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center gap-2" id="appToastMessage">
+        <i class="fa-solid fa-circle-info text-info"></i> Notification
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
 
 <!-- Bootstrap 5 JavaScript Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -242,6 +271,9 @@
 
 <!-- Core App Scripts -->
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% if current_user.is_authenticated %}
+<script src="{{ url_for('static', filename='js/ai_assistant.js') }}"></script>
+{% endif %}
 {% block scripts %}{% endblock %}
 
 </body>

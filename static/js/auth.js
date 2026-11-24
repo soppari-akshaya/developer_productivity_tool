@@ -84,7 +84,7 @@ function checkFirebaseConfigured() {
 }
 
 // Set up UI and authentication handlers
-document.addEventListener('DOMContentLoaded', async () => {
+async function initAuth() {
   // ==========================================
   // 1. Password Visibility Toggles (Eye Icon)
   // ==========================================
@@ -394,4 +394,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAuth);
+} else {
+  initAuth();
+}

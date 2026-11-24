@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy import or_
 from extensions import db
 from models import Task, TaskComment, Project, User, Notification
 from . import tasks_bp
@@ -14,13 +15,35 @@ def list_tasks():
 
     query = Task.query
     if current_user.role == 'developer':
-        query = query.filter_by(assigned_to_id=current_user.id)
+        user_project_ids = [p.id for p in Project.query.filter(
+            (Project.created_by_id == current_user.id) |
+            (Project.members.any(user_id=current_user.id))
+        ).all()]
+        conditions = [
+            Task.assigned_to_id == current_user.id,
+            Task.created_by_id == current_user.id
+        ]
+        if user_project_ids:
+            conditions.append(Task.project_id.in_(user_project_ids))
+        query = query.filter(or_(*conditions))
+    elif current_user.role == 'team_leader':
+        managed_project_ids = [p.id for p in Project.query.filter(
+            (Project.created_by_id == current_user.id) |
+            (Project.members.any(user_id=current_user.id))
+        ).all()]
+        conditions = [
+            Task.created_by_id == current_user.id,
+            Task.assigned_to_id == current_user.id
+        ]
+        if managed_project_ids:
+            conditions.append(Task.project_id.in_(managed_project_ids))
+        query = query.filter(or_(*conditions))
     
     if status_filter != 'all':
         query = query.filter_by(status=status_filter)
     if priority_filter != 'all':
         query = query.filter_by(priority=priority_filter)
-    if project_id:
+    if project_id and project_id != 'all' and str(project_id).strip() != '':
         query = query.filter_by(project_id=int(project_id))
 
     tasks = query.order_by(Task.deadline.asc().nullslast()).all()

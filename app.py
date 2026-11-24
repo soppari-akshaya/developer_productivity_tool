@@ -17,6 +17,7 @@ from tasks import tasks_bp
 from snippets import snippets_bp
 from issues import issues_bp
 from reports import reports_bp
+from ai_assistant import ai_assistant_bp
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -51,6 +52,13 @@ def create_app(config_class=Config):
     app.register_blueprint(snippets_bp)
     app.register_blueprint(issues_bp)
     app.register_blueprint(reports_bp)
+    app.register_blueprint(ai_assistant_bp)
+
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception:
+            pass
 
     # Root redirect
     @app.route('/')
@@ -76,11 +84,23 @@ def create_app(config_class=Config):
     def inject_global_vars():
         from flask_login import current_user
         unread_count = 0
+        active_timer_data = None
+        today_work_summary = None
         if current_user.is_authenticated:
             try:
                 unread_count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
             except Exception:
                 unread_count = 0
+            try:
+                from developer.routes import get_user_today_working_time
+                from models import ActiveTimer
+                today_work_summary = get_user_today_working_time(current_user.id)
+                timer_obj = ActiveTimer.query.filter_by(user_id=current_user.id).first()
+                if timer_obj:
+                    active_timer_data = timer_obj.to_dict()
+            except Exception:
+                active_timer_data = None
+                today_work_summary = None
 
         # Public Firebase config injected securely to browser
         firebase_config = {
@@ -96,6 +116,8 @@ def create_app(config_class=Config):
         return {
             'firebase_config': firebase_config,
             'unread_notifications_count': unread_count,
+            'current_active_timer': active_timer_data,
+            'today_work_summary': today_work_summary,
             'current_year': datetime.utcnow().year
         }
 

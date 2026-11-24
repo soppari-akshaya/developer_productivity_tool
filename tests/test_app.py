@@ -5,7 +5,7 @@ import tempfile
 from app import create_app
 from config import Config
 from extensions import db
-from models import User, Project, Task, CodeSnippet, WorkLog
+from models import User, Project, ProjectMember, Task, CodeSnippet, WorkLog, ActiveTimer, TimeEntry
 
 class DeveloperProductivityToolTests(unittest.TestCase):
     @classmethod
@@ -762,6 +762,664 @@ class DeveloperProductivityToolTests(unittest.TestCase):
         r_admin_own = client.get('/admin/dashboard')
         self.assertEqual(r_admin_own.status_code, 200)
         self.assertIn(b'Admin Dashboard', r_admin_own.data)
+        client.post('/logout')
+
+    def test_30_role_based_project_creation_and_permissions(self):
+        """Test Admin, Team Leader, and Developer project creation, ownership, assignments, and access isolation"""
+        client = self.app.test_client()
+
+        # Users seeded in setUpClass:
+        # admin: admin@testdomain.com
+        # dev: dev@testdomain.com
+        # tl: tl_public@testdomain.com (created in test_27) or seeded leader: leader@testdomain.com
+        admin_u = User.query.filter_by(email='admin@testdomain.com').first()
+        dev_u = User.query.filter_by(email='dev@testdomain.com').first()
+        tl_u = User.query.filter_by(email='leader@testdomain.com').first()
+        dev2_u = User.query.filter_by(email='dev2_project@testdomain.com').first()
+        if not dev2_u:
+            dev2_u = User(email='dev2_project@testdomain.com', full_name='Second Dev User', role='developer', is_active=True)
+            dev2_u.set_password('Dev2@12345')
+            db.session.add(dev2_u)
+            db.session.commit()
+
+        # ---------------------------------------------------------------------
+        # 1. DEVELOPER PROJECT CREATION & OWNERSHIP
+        # ---------------------------------------------------------------------
+        client.post('/login', data={'email': dev_u.email, 'password': 'Dev@12345'})
+        
+        # Verify Create Project button is visible to Developer
+        r_dev_list = client.get('/projects')
+        self.assertEqual(r_dev_list.status_code, 200)
+        self.assertIn(b'New Project', r_dev_list.data)
+
+        # Developer creates their own project
+        r_dev_create = client.post('/projects/create', data={
+            'name': 'Dev Solo Project',
+            'description': 'A private project initiated by developer.',
+            'priority': 'medium',
+            'status': 'active'
+        }, follow_redirects=False)
+        self.assertEqual(r_dev_create.status_code, 302)
+        dev_proj = Project.query.filter_by(name='Dev Solo Project').first()
+        self.assertIsNotNone(dev_proj)
+        self.assertEqual(dev_proj.created_by_id, dev_u.id)
+
+        # Creator is automatically registered as a project member
+        dev_lead_membership = ProjectMember.query.filter_by(project_id=dev_proj.id, user_id=dev_u.id).first()
+        self.assertIsNotNone(dev_lead_membership)
+
+        # Developer assigns another Developer to their project
+        r_dev_assign = client.post(f'/projects/{dev_proj.id}/members/add', data={
+            'user_id': str(dev2_u.id),
+            'role_in_project': 'developer'
+        }, follow_redirects=True)
+        self.assertEqual(r_dev_assign.status_code, 200)
+        self.assertIn(dev2_u.full_name.encode('utf-8'), r_dev_assign.data)
+        self.assertIsNotNone(ProjectMember.query.filter_by(project_id=dev_proj.id, user_id=dev2_u.id).first())
+
+        # Developer edits their own project
+        r_dev_edit = client.post(f'/projects/{dev_proj.id}/edit', data={
+            'name': 'Dev Solo Project (Updated)',
+            'description': 'Updated developer project description.',
+            'priority': 'high',
+            'status': 'active',
+            'progress': '25'
+        }, follow_redirects=True)
+        self.assertEqual(r_dev_edit.status_code, 200)
+        db.session.refresh(dev_proj)
+        self.assertEqual(dev_proj.name, 'Dev Solo Project (Updated)')
+        self.assertEqual(dev_proj.progress, 25)
+
+        client.post('/logout')
+
+        # ---------------------------------------------------------------------
+        # 2. TEAM LEADER PROJECT CREATION & ASSIGNMENT
+        # ---------------------------------------------------------------------
+        client.post('/login', data={'email': tl_u.email, 'password': 'Leader@12345'})
+        
+        # Verify Create Project button is visible to Team Leader
+        r_tl_list = client.get('/projects')
+        self.assertEqual(r_tl_list.status_code, 200)
+        self.assertIn(b'New Project', r_tl_list.data)
+
+        # Team Leader creates a project
+        r_tl_create = client.post('/projects/create', data={
+            'name': 'Team Leader Sprint Project',
+            'description': 'Managed by Team Leader for core roadmap.',
+            'priority': 'high',
+            'status': 'active'
+        }, follow_redirects=False)
+        self.assertEqual(r_tl_create.status_code, 302)
+        tl_proj = Project.query.filter_by(name='Team Leader Sprint Project').first()
+        self.assertIsNotNone(tl_proj)
+        self.assertEqual(tl_proj.created_by_id, tl_u.id)
+
+        # Team Leader assigns a Developer to their project
+        r_tl_assign = client.post(f'/projects/{tl_proj.id}/members/add', data={
+            'user_id': str(dev_u.id),
+            'role_in_project': 'developer'
+        }, follow_redirects=True)
+        self.assertEqual(r_tl_assign.status_code, 200)
+        self.assertIsNotNone(ProjectMember.query.filter_by(project_id=tl_proj.id, user_id=dev_u.id).first())
+
+        client.post('/logout')
+
+        # ---------------------------------------------------------------------
+        # 3. ADMIN PROJECT CREATION, GLOBAL VIEW & MULTI-ROLE ASSIGNMENT
+        # ---------------------------------------------------------------------
+        client.post('/login', data={'email': admin_u.email, 'password': 'Admin@12345'})
+
+        # Verify Create Project button is visible to Admin
+        r_admin_list = client.get('/projects')
+        self.assertEqual(r_admin_list.status_code, 200)
+        self.assertIn(b'New Project', r_admin_list.data)
+
+        # Admin views all projects (sees both Developer and Team Leader projects)
+        self.assertIn(b'Dev Solo Project', r_admin_list.data)
+        self.assertIn(b'Team Leader Sprint Project', r_admin_list.data)
+
+        # Admin creates project
+        r_admin_create = client.post('/projects/create', data={
+            'name': 'Admin Enterprise Project',
+            'description': 'Enterprise infrastructure initiative.',
+            'priority': 'critical',
+            'status': 'planning'
+        }, follow_redirects=False)
+        self.assertEqual(r_admin_create.status_code, 302)
+        admin_proj = Project.query.filter_by(name='Admin Enterprise Project').first()
+        self.assertIsNotNone(admin_proj)
+        self.assertEqual(admin_proj.created_by_id, admin_u.id)
+
+        # Admin assigns Team Leader to project
+        r_admin_assign_tl = client.post(f'/projects/{admin_proj.id}/members/add', data={
+            'user_id': str(tl_u.id),
+            'role_in_project': 'lead'
+        }, follow_redirects=True)
+        self.assertEqual(r_admin_assign_tl.status_code, 200)
+        self.assertIsNotNone(ProjectMember.query.filter_by(project_id=admin_proj.id, user_id=tl_u.id).first())
+
+        # Admin assigns Developer to project
+        r_admin_assign_dev = client.post(f'/projects/{admin_proj.id}/members/add', data={
+            'user_id': str(dev_u.id),
+            'role_in_project': 'developer'
+        }, follow_redirects=True)
+        self.assertEqual(r_admin_assign_dev.status_code, 200)
+        self.assertIsNotNone(ProjectMember.query.filter_by(project_id=admin_proj.id, user_id=dev_u.id).first())
+
+        # Admin edits Developer's project (Admin has global edit permissions)
+        r_admin_edit_dev = client.post(f'/projects/{dev_proj.id}/edit', data={
+            'name': 'Dev Solo Project (Admin Edited)',
+            'description': 'Admin audit review.',
+            'priority': 'critical',
+            'status': 'completed',
+            'progress': '100'
+        }, follow_redirects=True)
+        self.assertEqual(r_admin_edit_dev.status_code, 200)
+        db.session.refresh(dev_proj)
+        self.assertEqual(dev_proj.name, 'Dev Solo Project (Admin Edited)')
+        self.assertEqual(dev_proj.status, 'completed')
+
+        client.post('/logout')
+
+        # ---------------------------------------------------------------------
+        # 4. DEVELOPER UNAUTHORIZED ACCESS IS BLOCKED
+        # ---------------------------------------------------------------------
+        # dev2 is neither creator nor member of tl_proj
+        client.post('/login', data={'email': dev2_u.email, 'password': 'Dev2@12345'})
+
+        # Developer 2 cannot edit Team Leader's project
+        r_unauth_edit = client.post(f'/projects/{tl_proj.id}/edit', data={
+            'name': 'Hacked by Dev 2',
+            'description': 'Malicious attempt',
+            'priority': 'low',
+            'status': 'on_hold',
+            'progress': '0'
+        }, follow_redirects=True)
+        self.assertEqual(r_unauth_edit.status_code, 200)
+        self.assertIn(b'Permission denied', r_unauth_edit.data)
+        db.session.refresh(tl_proj)
+        self.assertEqual(tl_proj.name, 'Team Leader Sprint Project')  # unchanged!
+
+        # Developer 2 cannot delete Team Leader's project
+        r_unauth_del = client.post(f'/projects/{tl_proj.id}/delete', follow_redirects=True)
+        self.assertEqual(r_unauth_del.status_code, 200)
+        self.assertIn(b'Permission denied', r_unauth_del.data)
+        self.assertIsNotNone(db.session.get(Project, tl_proj.id))  # still exists!
+
+        # Developer 2 views projects assigned to them:
+        # dev2 is assigned to dev_proj, so dev_proj appears in their list:
+        r_dev2_list = client.get('/projects')
+        self.assertEqual(r_dev2_list.status_code, 200)
+        self.assertIn(b'Dev Solo Project', r_dev2_list.data)
+
+        # Developer can delete their own project
+        client.post('/logout')
+        client.post('/login', data={'email': dev_u.email, 'password': 'Dev@12345'})
+        r_dev_del_own = client.post(f'/projects/{dev_proj.id}/delete', follow_redirects=True)
+        self.assertEqual(r_dev_del_own.status_code, 200)
+        self.assertIn(b'has been deleted', r_dev_del_own.data)
+        self.assertIsNone(db.session.get(Project, dev_proj.id))
+        client.post('/logout')
+
+    def test_31_persistent_time_tracker_and_dashboard_integration(self):
+        """
+        Test persistent time tracker:
+        1. Current state when idle.
+        2. Starting active timer stores record in SQLite.
+        3. Prevention of duplicate active timers for a single user.
+        4. Pausing records accumulated seconds.
+        5. Resuming restarts running state.
+        6. Stopping finalizes duration to SQLite TimeEntry and clears ActiveTimer.
+        7. Accurate today's working time calculation (completed + active, no double counting).
+        8. User isolation (User B cannot see or manipulate User A's timer).
+        9. Topbar global indicator and Developer Dashboard 'Today's Working Time' card presence.
+        """
+        client = self.app.test_client()
+
+        # Login as Developer
+        r_login = client.post('/login', data={'email': 'dev@testdomain.com', 'password': 'Dev@12345'}, follow_redirects=True)
+        self.assertEqual(r_login.status_code, 200)
+
+        dev_user = User.query.filter_by(email='dev@testdomain.com').first()
+
+        # 1. When idle, GET /api/timer/current returns idle
+        r_idle = client.get('/api/timer/current')
+        self.assertEqual(r_idle.status_code, 200)
+        data_idle = json.loads(r_idle.data)
+        self.assertFalse(data_idle['active'])
+        self.assertEqual(data_idle['status'], 'idle')
+        self.assertIsNone(data_idle['timer'])
+
+        # Create a test project & task for dev
+        proj = Project(name='Timer Tracking Project', created_by_id=dev_user.id, status='active')
+        db.session.add(proj)
+        db.session.flush()
+        task = Task(title='Core Timer Feature', project_id=proj.id, assigned_to_id=dev_user.id, created_by_id=dev_user.id)
+        db.session.add(task)
+        db.session.commit()
+
+        # 2. Start timer
+        r_start = client.post('/api/timer/start', json={
+            'project_id': proj.id,
+            'task_id': task.id,
+            'description': 'Implementing stopwatch backend'
+        })
+        self.assertEqual(r_start.status_code, 201)
+        data_start = json.loads(r_start.data)
+        self.assertEqual(data_start['status'], 'success')
+        self.assertIsNotNone(data_start['timer'])
+        self.assertEqual(data_start['timer']['project_id'], proj.id)
+        self.assertEqual(data_start['timer']['task_id'], task.id)
+        self.assertEqual(data_start['timer']['status'], 'running')
+
+        # Verify in SQLite database
+        active_db = ActiveTimer.query.filter_by(user_id=dev_user.id).first()
+        self.assertIsNotNone(active_db)
+        self.assertEqual(active_db.status, 'running')
+        self.assertEqual(active_db.project_id, proj.id)
+        self.assertEqual(active_db.task_id, task.id)
+
+        # 3. Duplicate start prevention
+        r_dup = client.post('/api/timer/start', json={'project_id': proj.id})
+        self.assertEqual(r_dup.status_code, 400)
+        data_dup = json.loads(r_dup.data)
+        self.assertEqual(data_dup['status'], 'error')
+        self.assertIn('already active', data_dup['message'])
+
+        # 4. Multi-page navigation persistence:
+        # Requirement: NO timer widget in Dashboard or top navigation bar
+        r_dash = client.get('/developer/dashboard')
+        self.assertEqual(r_dash.status_code, 200)
+        dash_html = r_dash.data.decode('utf-8')
+        # User requested: No extra "Today's Working Time" large block
+        self.assertNotIn("Today's Working Time", dash_html)
+        self.assertIn('stat-card-today-hours', dash_html)
+        self.assertNotIn('global-timer-widget', dash_html)
+
+        r_proj_page = client.get('/projects')
+        self.assertEqual(r_proj_page.status_code, 200)
+        self.assertNotIn('global-timer-widget', r_proj_page.data.decode('utf-8'))
+
+        r_tasks_page = client.get('/tasks')
+        self.assertEqual(r_tasks_page.status_code, 200)
+        self.assertNotIn('global-timer-widget', r_tasks_page.data.decode('utf-8'))
+
+        # Check Time Tracker page renders project/task dropdowns and history table columns
+        r_timer_page = client.get('/developer/timer')
+        self.assertEqual(r_timer_page.status_code, 200)
+        timer_html = r_timer_page.data.decode('utf-8')
+        self.assertIn('timer-project-select', timer_html)
+        self.assertIn('timer-task-select', timer_html)
+        self.assertIn('Start Time', timer_html)
+        self.assertIn('End Time', timer_html)
+        self.assertIn('Duration', timer_html)
+
+        # 5. Pause timer
+        r_pause = client.post('/api/timer/pause')
+        self.assertEqual(r_pause.status_code, 200)
+        data_pause = json.loads(r_pause.data)
+        self.assertEqual(data_pause['status'], 'success')
+        self.assertEqual(data_pause['timer']['status'], 'paused')
+
+        db.session.refresh(active_db)
+        self.assertEqual(active_db.status, 'paused')
+        self.assertIsNone(active_db.last_started_at)
+
+        # Pausing already paused returns 400
+        r_pause_dup = client.post('/api/timer/pause')
+        self.assertEqual(r_pause_dup.status_code, 400)
+
+        # 6. Resume timer
+        r_resume = client.post('/api/timer/resume')
+        self.assertEqual(r_resume.status_code, 200)
+        data_resume = json.loads(r_resume.data)
+        self.assertEqual(data_resume['status'], 'success')
+        self.assertEqual(data_resume['timer']['status'], 'running')
+
+        db.session.refresh(active_db)
+        self.assertEqual(active_db.status, 'running')
+        self.assertIsNotNone(active_db.last_started_at)
+
+        # Resuming already running returns 400
+        r_resume_dup = client.post('/api/timer/resume')
+        self.assertEqual(r_resume_dup.status_code, 400)
+
+        # 7. Multi-user isolation:
+        # Dev logs out, Team Leader logs in
+        client.post('/logout')
+        client.post('/login', data={'email': 'leader@testdomain.com', 'password': 'Leader@12345'})
+        r_leader_timer = client.get('/api/timer/current')
+        self.assertEqual(r_leader_timer.status_code, 200)
+        leader_data = json.loads(r_leader_timer.data)
+        self.assertFalse(leader_data['active'])
+        self.assertEqual(leader_data['status'], 'idle')
+        self.assertIsNone(leader_data['timer'])
+
+        # Team leader has no active timer and cannot pause or stop
+        r_leader_pause = client.post('/api/timer/pause')
+        self.assertEqual(r_leader_pause.status_code, 404)
+        client.post('/logout')
+
+        # Dev logs back in to resume their active timer
+        client.post('/login', data={'email': 'dev@testdomain.com', 'password': 'Dev@12345'})
+        r_dev_check = client.get('/api/timer/current')
+        self.assertEqual(r_dev_check.status_code, 200)
+        self.assertTrue(json.loads(r_dev_check.data)['active'])
+
+        # 8. Stop active timer and record entry to SQLite
+        # Manually set accumulated seconds to simulate 25 minutes (1500 seconds)
+        active_db.accumulated_seconds = 1500
+        active_db.status = 'paused'
+        active_db.last_started_at = None
+        db.session.commit()
+
+        r_stop = client.post('/api/timer/stop', json={
+            'description': 'Completed Stopwatch Integration'
+        })
+        self.assertEqual(r_stop.status_code, 200)
+        data_stop = json.loads(r_stop.data)
+        self.assertEqual(data_stop['status'], 'success')
+        self.assertEqual(data_stop['duration_minutes'], 25)
+        self.assertEqual(data_stop['total_seconds'], 1500)
+
+        # ActiveTimer must be deleted
+        self.assertIsNone(ActiveTimer.query.filter_by(user_id=dev_user.id).first())
+
+        # TimeEntry must exist in SQLite
+        saved_entry = TimeEntry.query.filter_by(user_id=dev_user.id, description='Completed Stopwatch Integration').first()
+        self.assertIsNotNone(saved_entry)
+        self.assertEqual(saved_entry.duration_minutes, 25)
+        self.assertEqual(saved_entry.duration_seconds, 1500)
+        self.assertEqual(saved_entry.project_id, proj.id)
+        self.assertIsNotNone(saved_entry.start_time)
+        self.assertIsNotNone(saved_entry.end_time)
+
+        # 9. Today's working time calculation:
+        # Now today_total_minutes must reflect the 25 minutes logged
+        r_current_after_stop = client.get('/api/timer/current')
+        self.assertEqual(r_current_after_stop.status_code, 200)
+        data_after_stop = json.loads(r_current_after_stop.data)
+        self.assertFalse(data_after_stop['active'])
+        self.assertEqual(data_after_stop['today_total_minutes'], 25)
+        self.assertEqual(data_after_stop['today_total_seconds'], 1500)
+
+        client.post('/logout')
+
+    def test_32_theme_toggle_and_light_dark_mode_support(self):
+        """
+        Verify Light/Dark mode switcher:
+        1. base.html has pre-render theme script in <head> to prevent flash.
+        2. base.html contains topbar .theme-toggle-btn.
+        3. main.js synchronizes data-theme, data-bs-theme, and localStorage dpt_theme.
+        4. style.css defines both light and dark themes with Bootstrap 5 variable mapping.
+        5. Authenticated pages (Admin, Team Leader, Developer, Timer) include theme toggle.
+        6. Login and Register public pages do not contain theme toggle.
+        """
+        client = self.app.test_client()
+
+        # Check base.html
+        with open('templates/base.html', 'r', encoding='utf-8') as f:
+            base_html = f.read()
+        self.assertIn('dpt_theme', base_html)
+        self.assertIn('data-theme', base_html)
+        self.assertIn('data-bs-theme', base_html)
+        self.assertIn('theme-toggle-btn', base_html)
+
+        # Check main.js
+        with open('static/js/main.js', 'r', encoding='utf-8') as f:
+            main_js = f.read()
+        self.assertIn("localStorage.setItem('dpt_theme', theme)", main_js)
+        self.assertIn("document.documentElement.setAttribute('data-theme', theme)", main_js)
+        self.assertIn("document.documentElement.setAttribute('data-bs-theme', theme)", main_js)
+        self.assertIn('fa-moon', main_js)
+        self.assertIn('fa-sun', main_js)
+
+        # Check style.css
+        with open('static/css/style.css', 'r', encoding='utf-8') as f:
+            style_css = f.read()
+        self.assertIn('[data-theme="light"], [data-bs-theme="light"]', style_css)
+        self.assertIn('[data-theme="dark"], [data-bs-theme="dark"]', style_css)
+        self.assertIn('--bs-body-bg', style_css)
+        self.assertIn('--bs-card-bg', style_css)
+
+        # Authenticated views have theme toggle
+        with self.app.app_context():
+            dev = User.query.filter_by(email='dev@devproductivity.com').first()
+            admin = User.query.filter_by(role='admin').first()
+            leader = User.query.filter_by(role='team_leader').first()
+
+        # Dev views
+        client.post('/login', data={'email': 'dev@testdomain.com', 'password': 'Dev@12345'}, follow_redirects=True)
+        r_dev_dash = client.get('/developer/dashboard')
+        self.assertIn('theme-toggle-btn', r_dev_dash.data.decode('utf-8'))
+        r_timer = client.get('/developer/timer')
+        self.assertIn('theme-toggle-btn', r_timer.data.decode('utf-8'))
+        r_tasks = client.get('/tasks')
+        self.assertIn('theme-toggle-btn', r_tasks.data.decode('utf-8'))
+        client.post('/logout')
+
+        # Admin view
+        client.post('/login', data={'email': 'admin@testdomain.com', 'password': 'Admin@12345'}, follow_redirects=True)
+        r_admin_dash = client.get('/admin/dashboard')
+        self.assertIn('theme-toggle-btn', r_admin_dash.data.decode('utf-8'))
+        client.post('/logout')
+
+        # Team leader view
+        client.post('/login', data={'email': 'leader@testdomain.com', 'password': 'Leader@12345'}, follow_redirects=True)
+        r_leader_dash = client.get('/team-leader/dashboard')
+        self.assertIn('theme-toggle-btn', r_leader_dash.data.decode('utf-8'))
+        client.post('/logout')
+
+        # Public auth pages do NOT have theme toggle
+        r_login = client.get('/login')
+        self.assertNotIn('theme-toggle-btn', r_login.data.decode('utf-8'))
+        r_reg = client.get('/register')
+        self.assertNotIn('theme-toggle-btn', r_reg.data.decode('utf-8'))
+
+    def test_33_timer_button_states_and_dashboard_cleanliness(self):
+        """
+        Verify:
+        1. No timer widget in Dashboard or top navigation bar.
+        2. Today's Hours card exists and displays clean text without running ticker subtext.
+        3. Time Tracker button visibility:
+           - Idle: Start visible, Pause/Resume/Stop have d-none.
+           - Running: Pause and Stop visible, Start and Resume have d-none.
+           - Paused: Resume and Stop visible, Start and Pause have d-none.
+        4. Session persists across page navigation (Projects, Tasks, Dashboard).
+        5. Stopping resets timer to idle state.
+        """
+        client = self.app.test_client()
+
+        # Login as Developer
+        client.post('/login', data={'email': 'dev@testdomain.com', 'password': 'Dev@12345'}, follow_redirects=True)
+        dev = User.query.filter_by(email='dev@testdomain.com').first()
+
+        # Ensure no active timer exists initially
+        ActiveTimer.query.filter_by(user_id=dev.id).delete()
+        db.session.commit()
+
+        # 1. Idle state on /developer/timer
+        r_timer_idle = client.get('/developer/timer')
+        self.assertEqual(r_timer_idle.status_code, 200)
+        html_idle = r_timer_idle.data.decode('utf-8')
+
+        # In idle state:
+        # Start button is NOT d-none
+        self.assertIn('id="timer-start-btn" class="btn btn-success px-3.5 py-2 fw-semibold "', html_idle)
+        # Pause button has d-none
+        self.assertIn('id="timer-pause-btn" class="btn btn-warning px-3.5 py-2 fw-semibold d-none"', html_idle)
+        # Resume button has d-none
+        self.assertIn('id="timer-resume-btn" class="btn btn-primary px-3.5 py-2 fw-semibold d-none"', html_idle)
+        # Stop button has d-none
+        self.assertIn('id="timer-stop-btn" class="btn btn-danger px-3.5 py-2 fw-semibold d-none"', html_idle)
+
+        # 2. Start timer
+        proj = Project.query.filter_by(status='active').first()
+        r_start = client.post('/api/timer/start', json={'project_id': proj.id, 'description': 'Testing Button States'})
+        self.assertEqual(r_start.status_code, 201)
+
+        # 3. Running state on /developer/timer
+        r_timer_running = client.get('/developer/timer')
+        html_running = r_timer_running.data.decode('utf-8')
+        # Start button has d-none
+        self.assertIn('id="timer-start-btn" class="btn btn-success px-3.5 py-2 fw-semibold d-none"', html_running)
+        # Pause button is NOT d-none
+        self.assertIn('id="timer-pause-btn" class="btn btn-warning px-3.5 py-2 fw-semibold "', html_running)
+        # Resume button has d-none
+        self.assertIn('id="timer-resume-btn" class="btn btn-primary px-3.5 py-2 fw-semibold d-none"', html_running)
+        # Stop button is NOT d-none
+        self.assertIn('id="timer-stop-btn" class="btn btn-danger px-3.5 py-2 fw-semibold "', html_running)
+
+        # 4. Check Dashboard while timer is running
+        r_dash = client.get('/developer/dashboard')
+        html_dash = r_dash.data.decode('utf-8')
+        # NO timer in topbar or dashboard
+        self.assertNotIn('global-timer-widget', html_dash)
+        self.assertNotIn("Today's Working Time", html_dash)
+        self.assertIn('stat-card-today-hours', html_dash)
+        self.assertIn('Total tracked today', html_dash)
+
+        # 5. Pause timer
+        r_pause = client.post('/api/timer/pause')
+        self.assertEqual(r_pause.status_code, 200)
+
+        # 6. Paused state on /developer/timer
+        r_timer_paused = client.get('/developer/timer')
+        html_paused = r_timer_paused.data.decode('utf-8')
+        # Start button has d-none
+        self.assertIn('id="timer-start-btn" class="btn btn-success px-3.5 py-2 fw-semibold d-none"', html_paused)
+        # Pause button has d-none
+        self.assertIn('id="timer-pause-btn" class="btn btn-warning px-3.5 py-2 fw-semibold d-none"', html_paused)
+        # Resume button is NOT d-none
+        self.assertIn('id="timer-resume-btn" class="btn btn-primary px-3.5 py-2 fw-semibold "', html_paused)
+        # Stop button is NOT d-none
+        self.assertIn('id="timer-stop-btn" class="btn btn-danger px-3.5 py-2 fw-semibold "', html_paused)
+
+        # 7. Stop and save timer
+        # Simulate 120 accumulated seconds
+        act = ActiveTimer.query.filter_by(user_id=dev.id).first()
+        act.accumulated_seconds = 120
+        db.session.commit()
+
+        r_stop = client.post('/api/timer/stop', json={'project_id': proj.id, 'description': 'Finished Testing Button States'})
+        self.assertEqual(r_stop.status_code, 200)
+
+        # Verify active timer deleted
+        self.assertIsNone(ActiveTimer.query.filter_by(user_id=dev.id).first())
+
+        # 8. Post-stop state returns to idle
+        r_timer_after = client.get('/developer/timer')
+        html_after = r_timer_after.data.decode('utf-8')
+        self.assertIn('id="timer-start-btn" class="btn btn-success px-3.5 py-2 fw-semibold "', html_after)
+        self.assertIn('id="timer-pause-btn" class="btn btn-warning px-3.5 py-2 fw-semibold d-none"', html_after)
+        self.assertIn('id="timer-resume-btn" class="btn btn-primary px-3.5 py-2 fw-semibold d-none"', html_after)
+        self.assertIn('id="timer-stop-btn" class="btn btn-danger px-3.5 py-2 fw-semibold d-none"', html_after)
+
+        client.post('/logout')
+
+    def test_34_online_code_editor_execution(self):
+        """
+        Verify Online Code Editor Execution:
+        1. Editor page renders with CodeMirror, language selector, Run Code button, output panel, preview container.
+        2. Python execution with actual stdout.
+        3. Python execution with error handling / traceback.
+        4. JavaScript execution via Node.js with actual console.log output.
+        5. JavaScript execution with error handling.
+        6. SQL execution creating table, inserting rows, and selecting records.
+        7. SQL execution with syntax / missing table error handling.
+        8. HTML & CSS validation.
+        """
+        client = self.app.test_client()
+        client.post('/login', data={'email': 'dev@testdomain.com', 'password': 'Dev@12345'}, follow_redirects=True)
+
+        # 1. Editor Page Render
+        r_editor = client.get('/developer/editor')
+        self.assertEqual(r_editor.status_code, 200)
+        html = r_editor.data.decode('utf-8')
+        self.assertIn('editor-language-select', html)
+        self.assertIn('btn-run-code', html)
+        self.assertIn('editor-output', html)
+        self.assertIn('editor-output-table', html)
+        self.assertIn('editor-preview-container', html)
+        self.assertIn('editor-preview-frame', html)
+
+        # 2. Python Execution
+        py_code = 'print("Hello from Python")\nprint(10 + 20)'
+        r_py = client.post('/api/editor/execute', json={'language': 'python', 'code': py_code})
+        self.assertEqual(r_py.status_code, 200)
+        data_py = json.loads(r_py.data)
+        self.assertEqual(data_py['status'], 'success')
+        self.assertIn('Hello from Python', data_py['output'])
+        self.assertIn('30', data_py['output'])
+
+        # 3. Python Error Handling
+        py_err_code = '1 / 0'
+        r_py_err = client.post('/api/editor/execute', json={'language': 'python', 'code': py_err_code})
+        self.assertEqual(r_py_err.status_code, 200)
+        data_py_err = json.loads(r_py_err.data)
+        self.assertEqual(data_py_err['status'], 'error')
+        self.assertIn('ZeroDivisionError', data_py_err['output'])
+
+        # 4. JavaScript Execution
+        js_code = 'console.log("Hello from JavaScript");\nconsole.log(10 + 20);'
+        r_js = client.post('/api/editor/execute', json={'language': 'javascript', 'code': js_code})
+        self.assertEqual(r_js.status_code, 200)
+        data_js = json.loads(r_js.data)
+        self.assertEqual(data_js['status'], 'success')
+        self.assertIn('Hello from JavaScript', data_js['output'])
+        self.assertIn('30', data_js['output'])
+
+        # 5. JavaScript Error Handling
+        js_err_code = 'throw new Error("Custom JS Test Error");'
+        r_js_err = client.post('/api/editor/execute', json={'language': 'javascript', 'code': js_err_code})
+        self.assertEqual(r_js_err.status_code, 200)
+        data_js_err = json.loads(r_js_err.data)
+        self.assertEqual(data_js_err['status'], 'error')
+        self.assertIn('Custom JS Test Error', data_js_err['output'])
+
+        # 6. SQL Execution
+        # Reset SQL scratch db first
+        client.post('/api/editor/reset-sql')
+        sql_code = """
+        CREATE TABLE test_users (
+            id INTEGER,
+            name TEXT
+        );
+        INSERT INTO test_users VALUES (1, 'Akshaya');
+        INSERT INTO test_users VALUES (2, 'Developer');
+        SELECT * FROM test_users;
+        """
+        r_sql = client.post('/api/editor/execute', json={'language': 'sql', 'code': sql_code})
+        self.assertEqual(r_sql.status_code, 200)
+        data_sql = json.loads(r_sql.data)
+        self.assertEqual(data_sql['status'], 'success')
+        self.assertTrue(len(data_sql['tables']) >= 1)
+        tbl = data_sql['tables'][0]
+        self.assertEqual(tbl['columns'], ['id', 'name'])
+        self.assertEqual(tbl['rows'], [[1, 'Akshaya'], [2, 'Developer']])
+        self.assertIn('Akshaya', data_sql['output'])
+        self.assertIn('Developer', data_sql['output'])
+
+        # 7. SQL Error Handling
+        r_sql_err = client.post('/api/editor/execute', json={'language': 'sql', 'code': 'SELECT * FROM non_existing_table_xyz;'})
+        self.assertEqual(r_sql_err.status_code, 200)
+        data_sql_err = json.loads(r_sql_err.data)
+        self.assertEqual(data_sql_err['status'], 'error')
+        self.assertIn('no such table', data_sql_err['output'].lower())
+
+        # 8. HTML & CSS validation
+        r_html = client.post('/api/editor/execute', json={'language': 'html', 'code': '<h1>Hello</h1>'})
+        self.assertEqual(r_html.status_code, 200)
+        data_html = json.loads(r_html.data)
+        self.assertEqual(data_html['status'], 'success')
+        self.assertTrue(data_html.get('is_preview'))
+
+        r_css = client.post('/api/editor/execute', json={'language': 'css', 'code': 'h1 { color: red; }'})
+        self.assertEqual(r_css.status_code, 200)
+        data_css = json.loads(r_css.data)
+        self.assertEqual(data_css['status'], 'success')
+        self.assertTrue(data_css.get('is_preview'))
+
         client.post('/logout')
 
 if __name__ == '__main__':

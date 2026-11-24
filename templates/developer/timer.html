@@ -6,57 +6,128 @@
     <!-- Active Stopwatch Card -->
     <div class="col-lg-5">
       <div class="card border p-4 shadow-sm h-100 text-center" style="border-radius: 16px; background-color: var(--bg-card);">
-        <h5 class="fw-bold mb-1"><i class="fa-solid fa-clock text-primary me-2"></i>Time Tracker</h5>
-        <p class="text-muted mb-4" style="font-size: 0.85rem;">Track working hours dedicated to projects and sprint tasks.</p>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="fw-bold mb-0"><i class="fa-solid fa-clock text-primary me-2"></i>Time Tracker</h5>
+          <span id="timer-active-badge" class="badge bg-{{ 'success' if active_timer and active_timer.status == 'running' else ('warning' if active_timer and active_timer.status == 'paused' else 'secondary') }} bg-opacity-20 text-{{ 'success' if active_timer and active_timer.status == 'running' else ('warning' if active_timer and active_timer.status == 'paused' else 'secondary') }} text-uppercase">
+            {{ active_timer.status|upper if active_timer else 'IDLE' }}
+          </span>
+        </div>
+        <p class="text-muted mb-3" style="font-size: 0.82rem;">Persistent server-synchronized working hours stopwatch.</p>
 
         <!-- Big Stopwatch Counter -->
-        <div class="py-4 my-2">
+        <div class="py-3 my-1">
           <div id="timer-stopwatch-display" class="display-3 fw-bold font-monospace text-primary tracking-tight">
-            00:00:00
+            {{ active_timer.formatted_time if active_timer else '00:00:00' }}
           </div>
-          <p class="text-muted mt-2" style="font-size: 0.85rem;">Active session elapsed time</p>
+          <p class="text-muted mt-2 mb-0" style="font-size: 0.8rem;">Active session elapsed time</p>
         </div>
 
+        <!-- Project & Task Assignment Inputs -->
+        <div class="row g-2 text-start my-3 px-1">
+          <div class="col-sm-6">
+            <label class="form-label text-muted text-uppercase fw-semibold" style="font-size: 0.68rem;">Project</label>
+            <select id="timer-project-select" class="form-select form-select-sm form-control-custom">
+              <option value="">-- Select Project --</option>
+              {% for p in projects %}
+                <option value="{{ p.id }}" {% if active_timer and active_timer.project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-muted text-uppercase fw-semibold" style="font-size: 0.68rem;">Task</label>
+            <select id="timer-task-select" class="form-select form-select-sm form-control-custom">
+              <option value="">-- Select Task --</option>
+              {% for t in tasks %}
+                <option value="{{ t.id }}" data-project="{{ t.project_id }}" {% if active_timer and active_timer.task_id == t.id %}selected{% endif %}>{{ t.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 mt-2">
+            <label class="form-label text-muted text-uppercase fw-semibold" style="font-size: 0.68rem;">Description / Notes</label>
+            <input type="text" id="timer-description-input" class="form-control form-control-sm form-control-custom" placeholder="What are you currently coding?" value="{{ active_timer.description if active_timer else '' }}">
+          </div>
+        </div>
+
+        <!-- Alert Box for Error / Info Messages -->
+        <div id="timer-alert" class="alert d-none mb-3 py-2 px-3 text-start" role="alert" style="font-size: 0.85rem; border-radius: 10px;"></div>
+
         <!-- Controls -->
-        <div class="d-flex justify-content-center gap-3">
-          <button id="timer-start-btn" class="btn btn-success px-4 py-2 fw-semibold" style="border-radius: 12px;">
+        {% set is_running = active_timer and active_timer.status == 'running' %}
+        {% set is_paused = active_timer and active_timer.status == 'paused' %}
+        {% set is_idle = not active_timer or active_timer.status not in ['running', 'paused'] %}
+
+        <div class="d-flex justify-content-center gap-2 flex-wrap mt-2" id="timer-controls-container">
+          <button id="timer-start-btn" class="btn btn-success px-3.5 py-2 fw-semibold {% if not is_idle %}d-none{% endif %}" style="border-radius: 12px;">
             <i class="fa-solid fa-play me-1"></i> Start
           </button>
-          <button id="timer-pause-btn" class="btn btn-warning px-4 py-2 fw-semibold" style="border-radius: 12px;" disabled>
+          <button id="timer-pause-btn" class="btn btn-warning px-3.5 py-2 fw-semibold {% if not is_running %}d-none{% endif %}" style="border-radius: 12px;">
             <i class="fa-solid fa-pause me-1"></i> Pause
           </button>
-          <button id="timer-stop-btn" class="btn btn-danger px-4 py-2 fw-semibold" style="border-radius: 12px;" disabled>
+          <button id="timer-resume-btn" class="btn btn-primary px-3.5 py-2 fw-semibold {% if not is_paused %}d-none{% endif %}" style="border-radius: 12px;">
+            <i class="fa-solid fa-play me-1"></i> Resume
+          </button>
+          <button id="timer-stop-btn" class="btn btn-danger px-3.5 py-2 fw-semibold {% if is_idle %}d-none{% endif %}" style="border-radius: 12px;">
             <i class="fa-solid fa-stop me-1"></i> Stop & Save
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Manual Log Entry / Today's Sessions -->
+    <!-- Previous & Today's Time-Tracking Records -->
     <div class="col-lg-7">
       <div class="card border p-4 shadow-sm h-100" style="border-radius: 16px; background-color: var(--bg-card);">
-        <h6 class="fw-bold mb-3"><i class="fa-solid fa-list-ol text-info me-2"></i>Today's Logged Working Hours</h6>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h6 class="fw-bold mb-0"><i class="fa-solid fa-list-ol text-info me-2"></i>Time-Tracking History</h6>
+            <span class="text-muted" style="font-size: 0.72rem;">All previous sessions with project, task, and timestamps</span>
+          </div>
+          <span class="badge bg-primary bg-opacity-15 text-primary fs-6 px-3 py-1.5 font-monospace">
+            Today: <span id="timer-today-hours-badge">{{ today_hours_display }}</span>
+          </span>
+        </div>
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+          <table class="table table-hover align-middle mb-0" style="font-size: 0.82rem;">
             <thead>
-              <tr class="text-muted text-uppercase" style="font-size: 0.7rem;">
+              <tr class="text-muted text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">
                 <th>Project</th>
                 <th>Task / Description</th>
-                <th>Minutes</th>
-                <th>Time</th>
+                <th>Date</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Duration</th>
               </tr>
             </thead>
             <tbody>
-              {% for entry in today_entries %}
+              {% for entry in all_time_entries %}
               <tr>
-                <td class="fw-semibold">{{ entry.project.name if entry.project else 'General Development' }}</td>
-                <td class="text-muted">{{ entry.description or (entry.task.title if entry.task else 'Work Session') }}</td>
-                <td><span class="badge bg-primary bg-opacity-15 text-primary">{{ entry.duration_minutes }} min</span></td>
-                <td class="text-muted font-monospace" style="font-size: 0.75rem;">{{ entry.created_at.strftime('%H:%M') }}</td>
+                <td class="fw-semibold">
+                  <i class="fa-solid fa-folder text-primary me-1" style="font-size: 0.75rem;"></i>
+                  {{ entry.project.name if entry.project else 'General Coding' }}
+                </td>
+                <td>
+                  <div class="fw-medium text-body">{{ entry.task.title if entry.task else (entry.description or 'Work Session') }}</div>
+                  {% if entry.task and entry.description and entry.description != entry.task.title %}
+                    <div class="text-muted" style="font-size: 0.72rem;">{{ entry.description }}</div>
+                  {% endif %}
+                </td>
+                <td class="text-muted font-monospace" style="font-size: 0.75rem;">
+                  {{ entry.date.strftime('%Y-%m-%d') if entry.date else entry.created_at.strftime('%Y-%m-%d') }}
+                </td>
+                <td class="text-muted font-monospace" style="font-size: 0.75rem;">
+                  {{ entry.display_start_time }}
+                </td>
+                <td class="text-muted font-monospace" style="font-size: 0.75rem;">
+                  {{ entry.display_end_time }}
+                </td>
+                <td>
+                  <span class="badge badge-hours font-monospace">
+                    {{ entry.formatted_duration }}
+                  </span>
+                </td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="4" class="text-center py-4 text-muted">No time logged yet today.</td>
+                <td colspan="6" class="text-center py-4 text-muted">No time-tracking records logged yet.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -75,7 +146,7 @@
         <h6 class="modal-title fw-bold" id="saveTimeEntryModalLabel">Save Time Record</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form method="POST" action="{{ url_for('developer.save_timer') }}">
+      <form id="saveTimeEntryForm" method="POST" action="{{ url_for('developer.save_timer') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-body">
           <div class="mb-3">
@@ -84,7 +155,7 @@
           </div>
           <div class="mb-3">
             <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Select Project</label>
-            <select name="project_id" class="form-select form-control-custom">
+            <select id="modal_project_id" name="project_id" class="form-select form-control-custom">
               <option value="">-- General Coding --</option>
               {% for p in projects %}
                 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -93,7 +164,7 @@
           </div>
           <div class="mb-3">
             <label class="form-label text-uppercase fw-semibold" style="font-size: 0.72rem;">Description of Work</label>
-            <textarea name="description" class="form-control form-control-custom" rows="2" placeholder="What were you working on?"></textarea>
+            <textarea id="modal_description" name="description" class="form-control form-control-custom" rows="2" placeholder="What were you working on?"></textarea>
           </div>
         </div>
         <div class="modal-footer border-top">

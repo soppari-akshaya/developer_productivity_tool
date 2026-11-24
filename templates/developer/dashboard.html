@@ -30,8 +30,8 @@
       <div class="stat-card">
         <div>
           <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Today's Hours</span>
-          <h3 class="fw-bold mb-0 mt-1">{{ today_hours }} hrs</h3>
-          <span class="text-info fw-medium" style="font-size: 0.75rem;">Time Tracker Sync</span>
+          <h3 class="fw-bold mb-0 mt-1"><span id="stat-card-today-hours">{{ today_hours_display }}</span></h3>
+          <span class="text-muted" style="font-size: 0.75rem;">Total tracked today</span>
         </div>
         <div class="stat-icon bg-info bg-opacity-15 text-info"><i class="fa-solid fa-clock"></i></div>
       </div>
@@ -79,7 +79,7 @@
             </div>
 
             <div class="d-flex align-items-center gap-2">
-              <span class="badge bg-{{ 'danger' if task.priority == 'critical' else ('warning' if task.priority == 'high' else 'secondary') }} bg-opacity-15 text-{{ 'danger' if task.priority == 'critical' else ('warning' if task.priority == 'high' else 'secondary') }}" style="font-size: 0.7rem;">
+              <span class="badge bg-{{ 'danger' if task.priority == 'critical' else ('warning' if task.priority == 'high' else 'secondary') }} bg-opacity-15 text-{{ 'danger' if task.priority == 'critical' else ('warning' if task.priority == 'high' else 'secondary') }}">
                 {{ task.priority|title }}
               </span>
               <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="btn btn-sm btn-outline-secondary p-1 px-2" style="font-size: 0.75rem;">Details</a>
@@ -119,7 +119,7 @@
           <div class="list-group-item px-0 py-2 border-0 border-bottom d-flex align-items-center justify-content-between" style="background: transparent;">
             <div>
               <div class="fw-semibold text-truncate" style="font-size: 0.82rem; max-width: 220px;">{{ snip.title }}</div>
-              <span class="badge bg-secondary bg-opacity-25 text-primary text-uppercase font-monospace" style="font-size: 0.65rem;">{{ snip.language }}</span>
+              <span class="badge bg-secondary bg-opacity-25 text-primary text-uppercase font-monospace">{{ snip.language }}</span>
             </div>
             <a href="{{ url_for('snippets.list_snippets') }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.72rem;">Inspect</a>
           </div>
