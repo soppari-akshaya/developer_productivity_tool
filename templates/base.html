@@ -11,7 +11,7 @@
     (function() {
       try {
         var savedTheme = localStorage.getItem('dpt_theme');
-        var theme = savedTheme || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        var theme = (savedTheme === 'dark' || savedTheme === 'light') ? savedTheme : 'light';
         document.documentElement.setAttribute('data-theme', theme);
         document.documentElement.setAttribute('data-bs-theme', theme);
       } catch (e) {}

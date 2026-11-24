@@ -194,7 +194,8 @@ def verify_token():
             'status': 'success',
             'role': user.role,
             'redirect': dashboard_url,
-            'userName': user.full_name
+            'userName': user.full_name,
+            'isNewUser': False
         }), 200
 
     # 4. New Registration with designated role (From registration form)
@@ -213,7 +214,8 @@ def verify_token():
             'status': 'success',
             'role': new_user.role,
             'redirect': get_dashboard_url_for_role(new_user.role),
-            'userName': new_user.full_name
+            'userName': new_user.full_name,
+            'isNewUser': True
         }), 200
 
     # 5. First-time OAuth user without a role -> route to Onboarding step
@@ -227,7 +229,8 @@ def verify_token():
 
     return jsonify({
         'status': 'onboarding_required',
-        'redirect': url_for('auth.onboarding')
+        'redirect': url_for('auth.onboarding'),
+        'isNewUser': True
     }), 200
 
 @auth_bp.route('/auth/complete-onboarding', methods=['POST'])
@@ -271,7 +274,8 @@ def complete_onboarding():
     return jsonify({
         'status': 'success',
         'role': new_user.role,
-        'redirect': get_dashboard_url_for_role(new_user.role)
+        'redirect': get_dashboard_url_for_role(new_user.role),
+        'isNewUser': True
     }), 200
 
 # =========================================================================

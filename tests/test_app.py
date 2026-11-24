@@ -2,6 +2,7 @@ import os
 import unittest
 import json
 import tempfile
+from unittest.mock import patch
 from app import create_app
 from config import Config
 from extensions import db
@@ -1421,6 +1422,74 @@ class DeveloperProductivityToolTests(unittest.TestCase):
         self.assertTrue(data_css.get('is_preview'))
 
         client.post('/logout')
+
+    def test_35_default_light_theme_for_new_google_and_registered_users(self):
+        """
+        Verify:
+        1. templates/base.html pre-render script defaults to Light Mode when no savedTheme exists.
+        2. static/js/main.js defaults to Light Mode when no savedTheme exists.
+        3. static/js/auth.js sets Light Mode for newly registered Google users before redirecting.
+        4. auth/routes.py verify_token returns isNewUser flag to distinguish new vs existing users.
+        5. Existing users maintain their previously chosen theme.
+        """
+        # 1. Check templates/base.html default fallback
+        with open('templates/base.html', 'r', encoding='utf-8') as f:
+            base_html = f.read()
+        self.assertIn("(savedTheme === 'dark' || savedTheme === 'light') ? savedTheme : 'light'", base_html)
+
+        # 2. Check static/js/main.js default fallback
+        with open('static/js/main.js', 'r', encoding='utf-8') as f:
+            main_js = f.read()
+        self.assertIn("(savedTheme === 'dark' || savedTheme === 'light')", main_js)
+        self.assertIn("'light'", main_js)
+
+        # 3. Check static/js/auth.js has applyDefaultThemeForNewUser
+        with open('static/js/auth.js', 'r', encoding='utf-8') as f:
+            auth_js = f.read()
+        self.assertIn('applyDefaultThemeForNewUser', auth_js)
+        self.assertIn("localStorage.setItem('dpt_theme', 'light')", auth_js)
+        self.assertIn("setAttribute('data-theme', 'light')", auth_js)
+
+        # 4. Check backend verify_token isNewUser flag
+        client = self.app.test_client()
+        with patch('auth.routes.verify_firebase_token') as mock_verify:
+            # Case A: Existing user
+            mock_verify.return_value = {
+                'uid': 'existing_google_uid_123',
+                'email': 'dev@testdomain.com',
+                'name': 'Existing Dev'
+            }
+            res_exist = client.post('/auth/verify-token', json={'idToken': 'mock_valid_token'})
+            self.assertEqual(res_exist.status_code, 200)
+            data_exist = json.loads(res_exist.data)
+            self.assertFalse(data_exist.get('isNewUser'))
+
+            # Case B: Brand new user with role designated
+            mock_verify.return_value = {
+                'uid': 'brand_new_google_uid_999',
+                'email': 'brandnewgoogle@example.com',
+                'name': 'Brand New Google User'
+            }
+            res_new = client.post('/auth/verify-token', json={
+                'idToken': 'mock_valid_token',
+                'role': 'developer',
+                'fullName': 'Brand New Google User'
+            })
+            self.assertEqual(res_new.status_code, 200)
+            data_new = json.loads(res_new.data)
+            self.assertTrue(data_new.get('isNewUser'))
+
+            # Case C: First-time Google user needing onboarding
+            mock_verify.return_value = {
+                'uid': 'first_time_google_uid_888',
+                'email': 'firsttimegoogle@example.com',
+                'name': 'First Time Google User'
+            }
+            res_onboard = client.post('/auth/verify-token', json={'idToken': 'mock_valid_token'})
+            self.assertEqual(res_onboard.status_code, 200)
+            data_onboard = json.loads(res_onboard.data)
+            self.assertEqual(data_onboard['status'], 'onboarding_required')
+            self.assertTrue(data_onboard.get('isNewUser'))
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,7 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Theme switcher
   const themeToggleBtns = document.querySelectorAll('.theme-toggle-btn');
   const savedTheme = localStorage.getItem('dpt_theme');
-  const initialTheme = savedTheme || document.documentElement.getAttribute('data-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const initialTheme = (savedTheme === 'dark' || savedTheme === 'light') 
+    ? savedTheme 
+    : (document.documentElement.getAttribute('data-theme') || 'light');
 
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);

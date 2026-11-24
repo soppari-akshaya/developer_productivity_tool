@@ -74,6 +74,15 @@ async function sendTokenToBackend(payload) {
   return await response.json();
 }
 
+// Set default Light Mode for newly registered users
+function applyDefaultThemeForNewUser() {
+  try {
+    localStorage.setItem('dpt_theme', 'light');
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.setAttribute('data-bs-theme', 'light');
+  } catch (e) {}
+}
+
 // Check configuration status and alert if missing
 function checkFirebaseConfigured() {
   if (!isConfigured || !auth) {
@@ -164,6 +173,9 @@ async function initAuth() {
           rememberMe: true
         });
         if (resp.status === 'success' || resp.status === 'onboarding_required') {
+          if (resp.isNewUser) {
+            applyDefaultThemeForNewUser();
+          }
           window.location.href = resp.redirect;
           return;
         } else {
@@ -229,10 +241,15 @@ async function initAuth() {
         return;
       }
 
-      if (password !== confirmPassword) {
+      if (!password || password !== confirmPassword) {
         e.preventDefault();
         showAlert('Passwords do not match. Please retype password.');
         return;
+      }
+
+      // Apply default Light Mode for new registration if no saved theme exists
+      if (!localStorage.getItem('dpt_theme')) {
+        applyDefaultThemeForNewUser();
       }
 
       if (submitBtn) {
@@ -290,6 +307,9 @@ async function initAuth() {
           });
 
           if (resp.status === 'success' || resp.status === 'onboarding_required') {
+            if (resp.isNewUser) {
+              applyDefaultThemeForNewUser();
+            }
             window.location.href = resp.redirect;
           } else {
             showAlert(resp.message || 'Google authorization error.');
@@ -380,6 +400,9 @@ async function initAuth() {
         });
         const data = await resp.json();
         if (data.status === 'success') {
+          if (data.isNewUser) {
+            applyDefaultThemeForNewUser();
+          }
           window.location.href = data.redirect;
         } else {
           showAlert(data.message || 'Error completing onboarding.');
