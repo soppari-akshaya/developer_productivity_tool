@@ -1,6 +1,6 @@
 /**
  * Developer Productivity Tool Assistant Stylesheet
- * Integrates with existing Light and Dark themes via CSS variables.
+ * Clean, modern chatbot UI compatible with existing Light & Dark themes.
  * Never displays internal provider names to the user.
  */
 
@@ -82,9 +82,9 @@
   position: fixed;
   bottom: 84px;
   right: 24px;
-  width: 460px;
+  width: 440px;
   max-width: calc(100vw - 32px);
-  height: 640px;
+  height: 600px;
   max-height: calc(100vh - 110px);
   z-index: 1070;
   display: flex;
@@ -113,6 +113,7 @@
 .grok-panel-header {
   background: var(--bg-secondary, #ffffff);
   border-color: var(--border-color, #e2e8f0) !important;
+  flex-shrink: 0;
 }
 
 .grok-avatar {
@@ -145,156 +146,51 @@
   color: var(--text-primary, #0f172a);
 }
 
-.grok-btn-icon.active {
-  background: var(--brand-light, #eff6ff);
-  color: var(--brand-primary, #2563eb);
-  border-color: var(--brand-border, #bfdbfe);
-}
-
-/* VIEW 1: Welcome & Feature Cards Hub */
-.grok-welcome-view {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  background: var(--bg-primary, #f8fafc);
-  display: flex;
-  flex-direction: column;
-}
-
-.grok-hub-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: var(--brand-light, #eff6ff);
-  border: 1px solid var(--brand-border, #bfdbfe);
-}
-
-.grok-categories-scroll {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.grok-cards-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.grok-feature-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.grok-feature-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--brand-primary, #2563eb);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
-  background: var(--bg-secondary, #ffffff);
-}
-
-.grok-card-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  flex-shrink: 0;
-}
-
-.grok-card-content {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.grok-card-title {
-  font-weight: 600;
-  font-size: 0.83rem;
-  color: var(--text-primary, #0f172a);
-}
-
-.grok-card-desc {
-  font-size: 0.73rem;
-  color: var(--text-muted, #64748b);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Quick Action Chips Bar */
-.grok-quick-actions-bar {
-  background: var(--bg-primary, #f8fafc);
-  border-color: var(--border-color, #e2e8f0) !important;
-}
-
-.grok-chips-scroll {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  white-space: nowrap;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-}
-.grok-chips-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.grok-chip {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.74rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  background: var(--bg-card, #ffffff);
-  color: var(--text-primary, #0f172a);
-  border: 1px solid var(--border-color, #e2e8f0);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.grok-chip:hover {
-  background: var(--brand-light, #eff6ff);
-  border-color: var(--brand-primary, #2563eb);
-  color: var(--brand-primary, #2563eb);
-  transform: translateY(-1px);
-}
-
-/* Action Popover Form */
-.grok-action-card {
-  background: var(--bg-secondary, #ffffff);
-  border-color: var(--border-color, #e2e8f0) !important;
-}
-
-/* Messages Area */
+/* Chat View */
 .grok-chat-view {
   min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+/* Messages Container - Single smooth scrollbar */
 .grok-messages-container {
   flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: var(--bg-primary, #f8fafc);
   scroll-behavior: smooth;
+  padding: 16px;
+}
+
+.grok-messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.grok-messages-container::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 3px;
+}
+
+.grok-messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.45);
 }
 
 .grok-message-row {
   display: flex;
   gap: 8px;
-  max-width: 92%;
+  max-width: 90%;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .grok-msg-assistant {
@@ -324,7 +220,7 @@
   padding: 10px 14px;
   border-radius: 14px;
   font-size: 0.85rem;
-  line-height: 1.45;
+  line-height: 1.5;
   word-break: break-word;
   position: relative;
 }
@@ -355,7 +251,7 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Markdown Formatting */
+/* Markdown formatting inside messages */
 .grok-msg-text h1, .grok-msg-text h2, .grok-msg-text h3, .grok-msg-text h4, .grok-msg-text h5, .grok-msg-text h6 {
   font-weight: 700;
   margin-top: 8px;
@@ -366,6 +262,10 @@
 
 .grok-msg-text p {
   margin-bottom: 6px;
+}
+
+.grok-msg-text p:last-child {
+  margin-bottom: 0;
 }
 
 .grok-msg-text ul, .grok-msg-text ol {
@@ -416,6 +316,7 @@
 /* Typing Indicator */
 .grok-typing-indicator {
   background: var(--bg-primary, #f8fafc);
+  flex-shrink: 0;
 }
 
 .grok-typing-bubble {
@@ -450,6 +351,7 @@
 .grok-panel-footer {
   background: var(--bg-secondary, #ffffff);
   border-color: var(--border-color, #e2e8f0) !important;
+  flex-shrink: 0;
 }
 
 .grok-input-wrapper {

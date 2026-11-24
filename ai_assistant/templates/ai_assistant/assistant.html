@@ -24,9 +24,6 @@
       </div>
 
       <div class="d-flex align-items-center gap-1">
-        <button id="grok-hub-btn" class="btn btn-sm btn-outline-secondary grok-btn-icon" title="Features & Quick Actions" aria-label="Features Hub">
-          <i class="fa-solid fa-shapes"></i>
-        </button>
         <button id="grok-clear-btn" class="btn btn-sm btn-outline-secondary grok-btn-icon" title="Clear Conversation" aria-label="Clear Conversation">
           <i class="fa-solid fa-trash-can"></i>
         </button>
@@ -36,209 +33,20 @@
       </div>
     </div>
 
-    <!-- VIEW 1: Welcome Screen & Feature Cards Hub -->
-    <div id="grok-welcome-view" class="grok-welcome-view p-3" style="display: none;">
-      <div class="text-center mb-3 pt-1">
-        <div class="grok-hub-badge d-inline-flex align-items-center justify-content-center mb-2">
-          <i class="fa-solid fa-wand-magic-sparkles text-primary" style="font-size: 1.4rem;"></i>
-        </div>
-        <h5 class="fw-bold mb-1" style="font-size: 1.05rem;">Welcome to Developer Productivity Tool Assistant!</h5>
-        <p class="text-muted mx-auto mb-0" style="font-size: 0.82rem; max-width: 380px;">
-          How can I help you today? I can help you manage projects, create tasks, generate reports, track bugs, and improve your productivity.
-        </p>
-      </div>
-
-      <!-- Feature Categories Container -->
-      <div class="grok-categories-scroll">
-        <!-- 1. Project Management -->
-        <div class="grok-category-section mb-3">
-          <div class="grok-category-header d-flex align-items-center gap-1.5 mb-2">
-            <i class="fa-solid fa-diagram-project text-primary" style="font-size: 0.8rem;"></i>
-            <span class="fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Project Management</span>
-          </div>
-          <div class="grok-cards-grid">
-            <div class="grok-feature-card" data-action="create-project">
-              <div class="grok-card-icon bg-primary bg-opacity-15 text-primary"><i class="fa-solid fa-folder-plus"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Create a Project</span>
-                <span class="grok-card-desc">Prepare a structured project proposal with scope and team roles</span>
-              </div>
-            </div>
-            <div class="grok-feature-card" data-action="project-report">
-              <div class="grok-card-icon bg-info bg-opacity-15 text-info"><i class="fa-solid fa-chart-pie"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Generate Project Report</span>
-                <span class="grok-card-desc">Progress, milestones, team contributions, and risk analysis</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Task Management -->
-        <div class="grok-category-section mb-3">
-          <div class="grok-category-header d-flex align-items-center gap-1.5 mb-2">
-            <i class="fa-solid fa-list-check text-success" style="font-size: 0.8rem;"></i>
-            <span class="fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Task Management</span>
-          </div>
-          <div class="grok-cards-grid">
-            <div class="grok-feature-card" data-action="create-task">
-              <div class="grok-card-icon bg-success bg-opacity-15 text-success"><i class="fa-solid fa-square-plus"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Create a Task</span>
-                <span class="grok-card-desc">Draft structured task with priority, subtasks, and criteria</span>
-              </div>
-            </div>
-            <div class="grok-feature-card" data-action="task-report">
-              <div class="grok-card-icon bg-primary bg-opacity-15 text-primary"><i class="fa-solid fa-table-list"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Generate Task Report</span>
-                <span class="grok-card-desc">Status, priority, and assignee distribution summary</span>
-              </div>
-            </div>
-            <div class="grok-feature-card" data-action="break-project">
-              <div class="grok-card-icon bg-warning bg-opacity-15 text-warning"><i class="fa-solid fa-sitemap"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Break Project into Tasks</span>
-                <span class="grok-card-desc">Convert project descriptions into phased tasks and subtasks</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Bug and Issue Management -->
-        <div class="grok-category-section mb-3">
-          <div class="grok-category-header d-flex align-items-center gap-1.5 mb-2">
-            <i class="fa-solid fa-bug text-danger" style="font-size: 0.8rem;"></i>
-            <span class="fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Bug and Issue Management</span>
-          </div>
-          <div class="grok-cards-grid">
-            <div class="grok-feature-card" data-action="create-bug">
-              <div class="grok-card-icon bg-danger bg-opacity-15 text-danger"><i class="fa-solid fa-file-circle-exclamation"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Create a Bug Report</span>
-                <span class="grok-card-desc">Professional report with reproduction steps and severity</span>
-              </div>
-            </div>
-            <div class="grok-feature-card" data-action="analyze-bug">
-              <div class="grok-card-icon bg-secondary bg-opacity-15 text-secondary"><i class="fa-solid fa-microscope"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Analyze a Bug</span>
-                <span class="grok-card-desc">Diagnose causes, explore debugging steps, and solutions</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Developer Assistance -->
-        <div class="grok-category-section mb-3">
-          <div class="grok-category-header d-flex align-items-center gap-1.5 mb-2">
-            <i class="fa-solid fa-code text-info" style="font-size: 0.8rem;"></i>
-            <span class="fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Developer Assistance</span>
-          </div>
-          <div class="grok-cards-grid">
-            <div class="grok-feature-card" data-action="explain-code">
-              <div class="grok-card-icon bg-info bg-opacity-15 text-info"><i class="fa-solid fa-file-code"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Explain Code</span>
-                <span class="grok-card-desc">Step-by-step logic breakdown, bugs, and optimizations</span>
-              </div>
-            </div>
-            <div class="grok-feature-card" data-action="generate-code">
-              <div class="grok-card-icon bg-success bg-opacity-15 text-success"><i class="fa-solid fa-laptop-code"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Generate Code</span>
-                <span class="grok-card-desc">Sample code in Python, Java, JS, HTML, CSS, SQL</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. Daily Productivity -->
-        <div class="grok-category-section mb-2">
-          <div class="grok-category-header d-flex align-items-center gap-1.5 mb-2">
-            <i class="fa-solid fa-bolt text-warning" style="font-size: 0.8rem;"></i>
-            <span class="fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Daily Productivity</span>
-          </div>
-          <div class="grok-cards-grid">
-            <div class="grok-feature-card" data-action="daily-report">
-              <div class="grok-card-icon bg-warning bg-opacity-15 text-warning"><i class="fa-solid fa-calendar-day"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Generate Daily Work Report</span>
-                <span class="grok-card-desc">Summarize daily work using actual logs and tracked time</span>
-              </div>
-            </div>
-            <div class="grok-feature-card" data-action="productivity-summary">
-              <div class="grok-card-icon bg-primary bg-opacity-15 text-primary"><i class="fa-solid fa-gauge-high"></i></div>
-              <div class="grok-card-content">
-                <span class="grok-card-title">Productivity Summary</span>
-                <span class="grok-card-desc">Velocity metrics and actionable productivity improvement tips</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- VIEW 2: Interactive Chat & Form View -->
-    <div id="grok-chat-view" class="grok-chat-view d-flex flex-column flex-grow-1" style="display: flex;">
-      <!-- Quick Feature Pill Bar for switching in chat mode -->
-      <div class="grok-quick-actions-bar px-3 py-2 border-bottom">
-        <div class="grok-chips-scroll">
-          <button type="button" class="grok-chip" data-action="create-task">
-            <i class="fa-solid fa-plus me-1 text-success"></i> Create Task
-          </button>
-          <button type="button" class="grok-chip" data-action="create-project">
-            <i class="fa-solid fa-folder-plus me-1 text-primary"></i> Create Project
-          </button>
-          <button type="button" class="grok-chip" data-action="project-report">
-            <i class="fa-solid fa-chart-pie me-1 text-info"></i> Project Report
-          </button>
-          <button type="button" class="grok-chip" data-action="task-report">
-            <i class="fa-solid fa-table-list me-1 text-primary"></i> Task Report
-          </button>
-          <button type="button" class="grok-chip" data-action="create-bug">
-            <i class="fa-solid fa-bug me-1 text-danger"></i> Bug Report
-          </button>
-          <button type="button" class="grok-chip" data-action="analyze-bug">
-            <i class="fa-solid fa-microscope me-1 text-secondary"></i> Analyze Bug
-          </button>
-          <button type="button" class="grok-chip" data-action="explain-code">
-            <i class="fa-solid fa-file-code me-1 text-info"></i> Explain Code
-          </button>
-          <button type="button" class="grok-chip" data-action="generate-code">
-            <i class="fa-solid fa-laptop-code me-1 text-success"></i> Generate Code
-          </button>
-          <button type="button" class="grok-chip" data-action="daily-report">
-            <i class="fa-solid fa-calendar-day me-1 text-warning"></i> Daily Report
-          </button>
-          <button type="button" class="grok-chip" data-action="productivity-summary">
-            <i class="fa-solid fa-gauge-high me-1 text-primary"></i> Productivity Summary
-          </button>
-        </div>
-      </div>
-
-      <!-- Action Form Card (Guided input for cards) -->
-      <div id="grok-action-card" class="grok-action-card p-3 border-bottom" style="display: none;">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span id="grok-action-title" class="fw-bold" style="font-size: 0.85rem;">Action</span>
-          <button type="button" id="grok-action-cancel" class="btn btn-sm btn-link p-0 text-muted" style="font-size: 0.75rem;">Cancel</button>
-        </div>
-        <div id="grok-action-body">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-
+    <!-- Chat View (Clean Chatbot Layout) -->
+    <div id="grok-chat-view" class="grok-chat-view d-flex flex-column flex-grow-1">
       <!-- Messages Stream -->
-      <div id="grok-messages-container" class="grok-messages-container p-3">
-        <!-- Default Welcome Message -->
+      <div id="grok-messages-container" class="grok-messages-container p-3 flex-grow-1">
+        <!-- Default Simple Welcome Message -->
         <div class="grok-message-row grok-msg-assistant">
           <div class="grok-msg-avatar">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
           </div>
           <div class="grok-msg-bubble">
             <div class="grok-msg-text">
-              <strong>Welcome to Developer Productivity Tool Assistant!</strong>
-              <p class="mb-0 mt-1">How can I help you today? I can help you manage projects, create tasks, generate reports, track bugs, and improve your productivity.</p>
+              <p class="fw-bold mb-2" style="font-size: 0.90rem;">Hello! Welcome to Developer Productivity Tool Assistant.</p>
+              <p class="mb-2">I'm here to help you understand the application, learn how to manage projects and tasks, understand bugs, and improve your productivity.</p>
+              <p class="mb-0">Ask me anything, and I'll provide explanations, examples, and step-by-step guidance.</p>
             </div>
             <span class="grok-msg-time">Just now</span>
           </div>
@@ -263,7 +71,7 @@
               id="grok-input-textarea"
               class="form-control grok-textarea"
               rows="1"
-              placeholder="Ask Developer Productivity Tool Assistant anything, or choose a feature above..."
+              placeholder="Ask me anything..."
               aria-label="Message Assistant"
             ></textarea>
             <button id="grok-send-btn" type="button" class="btn btn-primary grok-send-btn" title="Send (Enter)" aria-label="Send Message">
@@ -272,9 +80,6 @@
           </div>
           <div class="d-flex justify-content-between align-items-center mt-1.5 px-1">
             <small class="text-muted" style="font-size: 0.68rem;">Enter to send &bull; Shift+Enter for new line</small>
-            <a href="#" id="grok-footer-hub-link" class="text-primary text-decoration-none" style="font-size: 0.70rem; font-weight: 600;">
-              <i class="fa-solid fa-shapes me-1"></i> Feature Hub
-            </a>
           </div>
         </form>
       </div>

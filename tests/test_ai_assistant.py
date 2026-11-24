@@ -130,35 +130,34 @@ class DeveloperProductivityToolAssistantTests(unittest.TestCase):
         self.assertEqual(r_login.status_code, 200)
         self.assertNotIn(b'id="grok-launcher-btn"', r_login.data)
 
-    def test_02_welcome_screen_and_predefined_feature_cards(self):
-        """Verify exact welcome message and all 5 categories of predefined feature cards"""
+    def test_02_clean_chatbot_ui_and_simple_welcome_screen(self):
+        """Verify clean chatbot UI, simple welcome message, and absence of action cards/chips"""
         self.login_as('dev_a@test.com')
         r = self.client.get('/developer/dashboard')
         html = r.data.decode('utf-8')
 
-        # Welcome message requirements
-        self.assertIn("Welcome to Developer Productivity Tool Assistant!", html)
-        self.assertIn("How can I help you today? I can help you manage projects, create tasks, generate reports, track bugs, and improve your productivity.", html)
+        # Header Title and Subtitle
+        self.assertIn("Developer Productivity Tool Assistant", html)
+        self.assertIn("Your AI-powered productivity companion", html)
 
-        # 5 Categories
-        self.assertIn('Project Management', html)
-        self.assertIn('Task Management', html)
-        self.assertIn('Bug and Issue Management', html)
-        self.assertIn('Developer Assistance', html)
-        self.assertIn('Daily Productivity', html)
+        # Simple Welcome Message
+        self.assertIn("Hello! Welcome to Developer Productivity Tool Assistant.", html)
+        self.assertIn("I'm here to help you understand the application, learn how to manage projects and tasks, understand bugs, and improve your productivity.", html)
+        self.assertIn("Ask me anything, and I'll provide explanations, examples, and step-by-step guidance.", html)
 
-        # Predefined Feature Cards
-        self.assertIn('Create a Project', html)
-        self.assertIn('Generate Project Report', html)
-        self.assertIn('Create a Task', html)
-        self.assertIn('Generate Task Report', html)
-        self.assertIn('Break Project into Tasks', html)
-        self.assertIn('Create a Bug Report', html)
-        self.assertIn('Analyze a Bug', html)
-        self.assertIn('Explain Code', html)
-        self.assertIn('Generate Code', html)
-        self.assertIn('Generate Daily Work Report', html)
-        self.assertIn('Productivity Summary', html)
+        # Essential Chatbot Controls
+        self.assertIn('id="grok-close-btn"', html)
+        self.assertIn('id="grok-clear-btn"', html)
+        self.assertIn('id="grok-input-textarea"', html)
+        self.assertIn('id="grok-send-btn"', html)
+
+        # Strictly verify NO action cards, category cards, or duplicate chip scrollbars exist
+        self.assertNotIn('grok-feature-card', html)
+        self.assertNotIn('grok-chips-scroll', html)
+        self.assertNotIn('grok-action-card', html)
+        self.assertNotIn('grok-quick-actions-bar', html)
+        self.assertNotIn('Project Management</span>', html)
+        self.assertNotIn('Task Management</span>', html)
 
     # 2. General AI Chat
     @patch('ai_assistant.services.GrokService.call_grok')
