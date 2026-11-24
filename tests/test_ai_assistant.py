@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 from app import create_app
 from config import Config
 from extensions import db
-from models import User, Project, ProjectMember, Task, TimeEntry, AIChatMessage
+from models import User, Project, ProjectMember, Task, TimeEntry, AIChatMessage, Issue, CodeSnippet
 from ai_assistant.services import GrokService
 
 class DeveloperProductivityToolAssistantTests(unittest.TestCase):
@@ -151,6 +151,14 @@ class DeveloperProductivityToolAssistantTests(unittest.TestCase):
         self.assertIn('id="grok-input-textarea"', html)
         self.assertIn('id="grok-send-btn"', html)
 
+        # Suggested Questions Section
+        self.assertIn("How can I help you?", html)
+        self.assertIn("How to create a project?", html)
+        self.assertIn("How to create a task?", html)
+        self.assertIn("How to report a bug?", html)
+        self.assertIn("How do code snippets work?", html)
+        self.assertIn("How does the code editor work?", html)
+
         # Strictly verify NO action cards, category cards, or duplicate chip scrollbars exist
         self.assertNotIn('grok-feature-card', html)
         self.assertNotIn('grok-chips-scroll', html)
@@ -176,6 +184,40 @@ class DeveloperProductivityToolAssistantTests(unittest.TestCase):
         data = res.get_json()
         self.assertTrue(data['success'])
         self.assertIn('indexes on foreign keys', data['reply'])
+
+    def test_03b_suggested_questions_all_five_work_without_db_inserts(self):
+        """Test all 5 suggested questions return guidance and explanations without creating records"""
+        self.login_as('dev_a@test.com')
+
+        p_count = Project.query.count()
+        t_count = Task.query.count()
+        i_count = Issue.query.count()
+        s_count = CodeSnippet.query.count()
+
+        questions = [
+            ("How to create a project?", ["Project Management", "/projects/create"]),
+            ("How to create a task?", ["Task Management", "/tasks/create"]),
+            ("How to report a bug?", ["Bug Tracker", "/issues/create"]),
+            ("How do code snippets work?", ["Code Snippets", "/snippets"]),
+            ("How does the code editor work?", ["Online Code Editor", "/developer/editor"])
+        ]
+
+        for q, expected_keywords in questions:
+            res = self.client.post('/ai/chat',
+                                   data=json.dumps({'message': q}),
+                                   content_type='application/json')
+            self.assertEqual(res.status_code, 200, f"Failed on question: {q}")
+            data = res.get_json()
+            self.assertTrue(data['success'], f"Unsuccessful reply on question: {q}")
+            reply = data['reply']
+            for kw in expected_keywords:
+                self.assertIn(kw, reply, f"Keyword '{kw}' missing in reply for '{q}'")
+
+        # Strictly verify zero database records were created
+        self.assertEqual(Project.query.count(), p_count)
+        self.assertEqual(Task.query.count(), t_count)
+        self.assertEqual(Issue.query.count(), i_count)
+        self.assertEqual(CodeSnippet.query.count(), s_count)
 
     # 3. Project Management: Create Project & Project Report
     @patch('ai_assistant.services.GrokService.call_grok')

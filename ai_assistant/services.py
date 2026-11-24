@@ -335,7 +335,7 @@ class GrokService:
         """
         General AI Chat with Developer Productivity Tool Assistant.
         Works strictly as an informational and guidance assistant.
-        Never creates or modifies database records for projects or tasks.
+        Never creates or modifies database records for projects, tasks, bugs, or snippets.
         """
         system_prompt = (
             "You are the Developer Productivity Tool Assistant, an intelligent, professional AI chatbot and guidance assistant "
@@ -343,17 +343,40 @@ class GrokService:
             "ROLE & PURPOSE:\n"
             "You work ONLY as an informational and guidance assistant. You help users understand the application, learn how to manage projects and tasks, understand bugs, analyze code, and improve productivity. "
             "Provide clear explanations, realistic examples, and step-by-step guidance.\n\n"
-            "STRICT PROHIBITION ON DATABASE CREATION:\n"
-            "- You must NEVER create, save, insert, update, or delete project or task records in the database.\n"
-            "- You must NEVER execute or simulate automated project or task creation operations.\n"
-            "- If a user asks you to create, save, or add a project or task, explicitly inform them that you are an informational guide and cannot directly modify the database, and provide clear step-by-step instructions on how the user can create it manually through the existing application modules (/projects/create or /tasks/create).\n\n"
-            "TOPIC GUIDELINES:\n"
-            "- When users ask about projects: Explain how to plan a project, explain requirements and objectives, discuss technology stack selection, provide project examples and guidelines, and explain how to use the existing Project Management module (/projects).\n"
-            "- When users ask about tasks: Explain how to define tasks, explain task priorities, assignments, deadlines, and statuses, provide task examples and best practices, and explain how to use the existing Task Management module (/tasks).\n"
-            "- When users ask about other application features (e.g. Bug Tracker, Time Tracker, Code Snippets, Online Code Editor, Analytics, Work Logs): Explain how the feature works, provide practical instructions, and help users understand how to use the platform.\n\n"
+            "STRICT PROHIBITION ON DATABASE CREATION & EXECUTION:\n"
+            "- You must NEVER create, save, insert, update, or delete project, task, bug, or snippet records in the database.\n"
+            "- You must NEVER execute or simulate automated project or task creation operations, or execute code on behalf of the user.\n"
+            "- If a user asks you to create, save, or add a record, explicitly explain that you are strictly an informational guide that cannot modify the database, and provide clear step-by-step instructions on how the user can perform the action manually through the existing application modules.\n\n"
+            "SPECIFIC GUIDANCE FOR COMMON QUESTIONS:\n"
+            "1. 'How to create a project?':\n"
+            "   - Explain opening Project Management (/projects) from the sidebar and accessing the project creation form (/projects/create).\n"
+            "   - Detail the required fields: Project Name, Description, Objectives, Technology Stack, Start Date and Deadline, Team Members / Assigned Developers, and Project Requirements.\n"
+            "   - Provide a realistic example of a well-defined project.\n"
+            "   - Explain the numbered steps to save the project manually by clicking 'Create Project'.\n\n"
+            "2. 'How to create a task?':\n"
+            "   - Explain opening Task Management (/tasks) from the sidebar and accessing the task creation form (/tasks/create).\n"
+            "   - Detail the required fields: Task Title, Description, Associated Project, Assigned Developer, Priority (Low, Medium, High, Critical), Status (To Do, In Progress), and Start Date & Due Date.\n"
+            "   - Provide a realistic example of a well-defined task with acceptance criteria.\n"
+            "   - Explain the numbered steps to save the task manually by clicking 'Create Task'.\n\n"
+            "3. 'How to report a bug?':\n"
+            "   - Explain opening the Bug Tracker (/issues) from the sidebar and accessing the bug report form (/issues/create).\n"
+            "   - Detail the required fields: Bug Title, Description, Associated Project, Assigned Developer, Steps to Reproduce, Expected Result vs Actual Result, Severity (Critical, Major, Moderate, Minor), and Priority.\n"
+            "   - Mention adding screenshots or log snippets, and explain how to submit the report manually by clicking 'Submit Issue'.\n\n"
+            "4. 'How do code snippets work?':\n"
+            "   - Explain what code snippets are (a reusable library for scripts, functions, queries, and templates).\n"
+            "   - Explain opening the Code Snippets module (/snippets) and saving a new snippet (/snippets/create).\n"
+            "   - Explain providing Title, Programming Language (JavaScript, Python, Java, HTML, CSS, SQL, TypeScript, Bash), Tags, and Description.\n"
+            "   - Explain organizing, searching by keyword, filtering by language, and 1-click copying to reuse across projects, with a practical code example.\n\n"
+            "5. 'How does the code editor work?':\n"
+            "   - Explain opening the Online Code Editor (/developer/editor) from the sidebar.\n"
+            "   - Explain selecting a programming language: JavaScript, Python, HTML, CSS, SQL.\n"
+            "   - Explain writing and editing code in the CodeMirror editor.\n"
+            "   - Explain executing code where supported by clicking 'Run Code' (Python via backend python interpreter, JavaScript via Node.js, SQL via isolated SQLite scratch DB, HTML/CSS via live preview iframe).\n"
+            "   - Explain viewing output, errors, and execution times in the output console panel, and how to clear code.\n"
+            "   - State execution limitations: 5-second timeout, 100KB payload limit, and secure sandboxing without external network/filesystem access.\n\n"
             "STYLE & FORMATTING:\n"
-            "- Clean, minimal, modern chatbot tone: concise, professional, warm, and structured.\n"
-            "- Use clean Markdown headings, bullet points, checklists, and code blocks where helpful."
+            "- Use clean Markdown headings, numbered steps, bullet points, checklists, and code blocks.\n"
+            "- Always be concise, practical, professional, and easy to follow."
         )
 
         messages = [{"role": "system", "content": system_prompt}]
@@ -364,7 +387,105 @@ class GrokService:
                     messages.append({"role": msg['role'], "content": msg['content']})
 
         messages.append({"role": "user", "content": user_message})
-        return cls.call_grok(messages, temperature=0.7)
+        res = cls.call_grok(messages, temperature=0.7)
+
+        # Fallback to rich guidance templates if call_grok failed (e.g. no API key configured)
+        if not res.get('success'):
+            normalized = (user_message or '').lower().strip().rstrip('?')
+            if 'how to create a project' in normalized:
+                return {'success': True, 'content': cls.PROJECT_CREATION_GUIDANCE}
+            elif 'how to create a task' in normalized:
+                return {'success': True, 'content': cls.TASK_CREATION_GUIDANCE}
+            elif 'how to report a bug' in normalized:
+                return {'success': True, 'content': cls.BUG_REPORTING_GUIDANCE}
+            elif 'code snippet' in normalized:
+                return {'success': True, 'content': cls.CODE_SNIPPETS_GUIDANCE}
+            elif 'code editor' in normalized:
+                return {'success': True, 'content': cls.CODE_EDITOR_GUIDANCE}
+
+        return res
+
+    BUG_REPORTING_GUIDANCE = (
+        "### 🐞 How to Report a Bug: Step-by-Step Guide\n\n"
+        "> **Note:** The AI Assistant is an informational guide and does **not** create or submit bug reports to the database. "
+        "Follow these steps to submit your bug report directly in the **Bug Tracker** module.\n\n"
+        "---\n\n"
+        "### 1. 🔑 Important Bug Details to Prepare\n"
+        "Before reporting an issue, prepare these essential details:\n\n"
+        "1. **Bug Title:** A concise summary of the failure (e.g., *Session timeout occurs prematurely during form submission*).\n"
+        "2. **Associated Project:** The active project affected by the defect.\n"
+        "3. **Steps to Reproduce:** A numbered list of clear, reproducible steps.\n"
+        "4. **Expected Result:** What should happen under normal conditions.\n"
+        "5. **Actual Result:** What actually happened, including error codes or symptoms.\n"
+        "6. **Severity & Priority:** Impact level (*Critical, Major, Moderate, Minor*) and resolution priority (*Low, Medium, High, Critical*).\n"
+        "7. **Assigned Developer:** (Optional) Select a developer to investigate the issue.\n\n"
+        "---\n\n"
+        "### 2. 💡 Example of a Well-Defined Bug Report\n\n"
+        "- **Title:** TypeError: Cannot read property 'map' of undefined in Task List\n"
+        "- **Project:** Developer Productivity Platform\n"
+        "- **Severity:** Major | **Priority:** High\n"
+        "- **Steps to Reproduce:**\n"
+        "  1. Navigate to Task Management (/tasks).\n"
+        "  2. Filter tasks by status 'Completed'.\n"
+        "  3. Switch page view to Sprint Kanban Board.\n"
+        "- **Expected Result:** Completed tasks display cleanly inside the 'Done' board column.\n"
+        "- **Actual Result:** Console logs `TypeError: Cannot read property 'map'` and tasks fail to render.\n\n"
+        "---\n\n"
+        "### 3. 🛠️ Steps to Report the Bug Manually in the App\n\n"
+        "1. Click **Bug Tracker** (or **Bug Reports**) in the left sidebar navigation (`/issues`).\n"
+        "2. Click the **+ Report Bug** or **New Issue** button (`/issues/create`).\n"
+        "3. Enter the **Title**, select the **Project**, and describe the bug with reproduction steps.\n"
+        "4. Select the appropriate **Severity** and **Priority** levels.\n"
+        "5. Click **Submit Issue** to save the bug report to the database."
+    )
+
+    CODE_SNIPPETS_GUIDANCE = (
+        "### 📦 How Code Snippets Work: Step-by-Step Guide\n\n"
+        "> **Note:** The AI Assistant is an informational guide and does **not** save snippets to the database. "
+        "Use the **Code Snippets** module to manage your reusable code collection.\n\n"
+        "---\n\n"
+        "### 1. 💡 What are Code Snippets?\n"
+        "Code Snippets provide a central, searchable library for developers to store, organize, and reuse common code patterns, utility functions, database queries, and architectural boilerplate.\n\n"
+        "---\n\n"
+        "### 2. 🔑 Key Features of the Snippets Module\n\n"
+        "- **Multi-Language Support:** JavaScript, Python, Java, HTML, CSS, SQL, TypeScript, Bash.\n"
+        "- **Fast Search & Filtering:** Filter by programming language or search by keyword across titles, code, and tags.\n"
+        "- **1-Click Copy:** Instant clipboard copy button for rapid insertion into your editor.\n"
+        "- **Favorites:** Star high-frequency snippets to keep them pinned at the top.\n\n"
+        "---\n\n"
+        "### 3. 🛠️ How to Save & Reuse Snippets Manually\n\n"
+        "1. Click **Code Snippets** in the left sidebar navigation (`/snippets`).\n"
+        "2. Click **+ New Snippet** (`/snippets/create`).\n"
+        "3. Enter a descriptive **Title** (e.g., *Python Redis Cache Decorator*).\n"
+        "4. Select the **Language** and paste your source code.\n"
+        "5. Add optional **Tags** (e.g., `redis, cache, decorator`) and description.\n"
+        "6. Click **Save Snippet** to store it in your repository.\n"
+        "7. Whenever you need it, visit `/snippets`, search your tag, and click **Copy**!"
+    )
+
+    CODE_EDITOR_GUIDANCE = (
+        "### 💻 How the Online Code Editor Works\n\n"
+        "> **Note:** The AI Assistant does not execute code on your behalf. "
+        "Use the **Online Code Editor** in your developer dashboard for interactive editing and execution.\n\n"
+        "---\n\n"
+        "### 1. 🌐 Supported Languages & Execution Engines\n\n"
+        "- **Python:** Real execution in a secure Python 3 environment capturing stdout and tracebacks.\n"
+        "- **JavaScript:** Real execution via Node.js capturing `console.log()` and runtime exceptions.\n"
+        "- **SQL:** Executes SQLite statements against an isolated per-user scratch database with table rendering and reset button.\n"
+        "- **HTML & CSS:** Renders interactive preview inside an isolated preview frame.\n\n"
+        "---\n\n"
+        "### 2. 🛠️ How to Use the Code Editor\n\n"
+        "1. Click **Online Code Editor** in the left sidebar (`/developer/editor`).\n"
+        "2. Select your target programming language from the top dropdown.\n"
+        "3. Write or edit your code in the syntax-highlighted editor.\n"
+        "4. Click the green **Run Code** button to execute.\n"
+        "5. Inspect the output, return status, and execution duration in the Output panel below.\n\n"
+        "---\n\n"
+        "### 3. 🔒 Execution Limits & Protections\n\n"
+        "- **5-Second Timeout:** Prevents infinite loops or blocking processes.\n"
+        "- **100KB Payload Limit:** Safeguards against excessive memory usage.\n"
+        "- **Sandboxed Isolation:** Code cannot access unauthorized host files or network sockets."
+    )
 
     PROJECT_CREATION_GUIDANCE = (
         "### 📋 How to Create a Project: Comprehensive Guide\n\n"

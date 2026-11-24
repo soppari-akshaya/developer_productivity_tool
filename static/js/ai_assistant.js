@@ -18,6 +18,31 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!launcherBtn || !chatPanel) return;
 
   let historyLoaded = false;
+  let isSending = false;
+
+  function setSuggestedChipsDisabled(disabled) {
+    document.querySelectorAll('.grok-suggested-chip').forEach(chip => {
+      chip.disabled = disabled;
+      if (disabled) {
+        chip.classList.add('disabled');
+      } else {
+        chip.classList.remove('disabled');
+      }
+    });
+  }
+
+  function setLoading(loading) {
+    if (loading) {
+      typingIndicator.style.display = 'block';
+      sendBtn.disabled = true;
+      setSuggestedChipsDisabled(true);
+      scrollToBottom();
+    } else {
+      typingIndicator.style.display = 'none';
+      sendBtn.disabled = false;
+      setSuggestedChipsDisabled(false);
+    }
+  }
 
   const DEFAULT_WELCOME_HTML = `
     <div class="grok-message-row grok-msg-assistant">
@@ -218,17 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToBottom();
   }
 
-  function setLoading(loading) {
-    if (loading) {
-      typingIndicator.style.display = 'block';
-      sendBtn.disabled = true;
-      scrollToBottom();
-    } else {
-      typingIndicator.style.display = 'none';
-      sendBtn.disabled = false;
-    }
-  }
-
   // Load History
   async function loadHistory() {
     try {
@@ -258,13 +272,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 50);
   }
 
-  // Chat submit
-  async function handleSend() {
-    const text = (inputTextarea.value || '').trim();
-    if (!text) return;
-
-    inputTextarea.value = '';
-    inputTextarea.style.height = 'auto';
+  // Send Question (used by both textarea input and suggested question chips)
+  async function sendQuestion(text) {
+    if (!text || isSending) return;
+    isSending = true;
 
     appendUserMessage(text);
     setLoading(true);
@@ -281,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       setLoading(false);
+      isSending = false;
 
       if (data.success && data.reply) {
         appendAssistantMessage(data.reply);
@@ -289,9 +301,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (e) {
       setLoading(false);
+      isSending = false;
       appendErrorMessage('Connection error: could not contact server.');
     }
   }
+
+  // Chat submit
+  function handleSend() {
+    const text = (inputTextarea.value || '').trim();
+    if (!text || isSending) return;
+
+    inputTextarea.value = '';
+    inputTextarea.style.height = 'auto';
+    sendQuestion(text);
+  }
+
+  // Bind click for each suggested question chip
+  document.querySelectorAll('.grok-suggested-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (isSending) return;
+      const question = chip.getAttribute('data-question') || chip.textContent.trim();
+      sendQuestion(question);
+    });
+  });
 
   // Clear conversation history
   clearBtn?.addEventListener('click', () => {
